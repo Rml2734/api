@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(jwt({ secret: 'secreto', algorithms: ['HS256']}).unless({path: ['/api/signup', '/api/login',  '/api/metas']}));
+app.use(jwt({ secret: 'secreto', algorithms: ['HS256']}).unless({path: ['/api/signup', '/api/login']}));
 
 app.use('/', indexRouter);
 app.use('/api/metas', metasRouter);
@@ -37,7 +37,7 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  //console.log(err);
+  console.log(err);
   res.send('error');
 });
 

@@ -61,7 +61,7 @@ router.post(
   
   function crearFicha(email) {
     let ficha = jwt.sign({
-      exp: Math.floor(Date.now() / 1000) + 60,
+      exp: Math.floor(Date.now() / 1000) + (60 * 60),
       usuario: email
     }, 'secreto');
     return ficha;

@@ -49,7 +49,8 @@ function actualizar(tabla, id, item, callback) {
   const keys = Object.keys(item);
   const actualizaciones = keys.map(key => `${key} = '${item[key]}'`).join(', ');
 
-  db.any(`UPDATE ${tabla} SET ${actualizaciones} WHERE id = ${id} returning *`)
+  const sql  = `UPDATE ${tabla} SET ${actualizaciones} WHERE id = ${id} returning *`;
+  db.any(sql)
     .then(([resultado]) => {
       callback(null, resultado);
     })

@@ -2,7 +2,7 @@ const db = require('./configuracion');
 
 // Definir todas las funciones primero
 function pedirTodas(tabla, cuenta_id, callback) {
-  db.any(`SELECT * FROM ${tabla} WHERE cuenta_id = ${cuenta_id}`)
+  db.any(`SELECT * FROM $1:name WHERE cuenta_id = $2`, [tabla, cuenta_id])
     .then(resultado => {
       callback(null, resultado);
     })

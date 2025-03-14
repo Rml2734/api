@@ -90,46 +90,58 @@ router.post('/',
     });
   });
 
-/* PUT Actualizar meta */
-router.put('/:id',
-  body('detalles').isLength({ min: 5 }),
-  body('periodo').not().isEmpty(),
-  function (req, res, next) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-     //const meta = req.body;
-     //const id = req.params.id;
-     //if (meta.id !== id) {
-       //return res.sendStatus(409);
-     //}
-     //const indice = metas.findIndex(item => item.id === id);
-     //if (indice === -1) {
-       //return res.sendStatus(404);
-     //}
-     //metas[indice] = meta;
-     //res.send(meta);
-    const body = req.body;
-    const id = req.params.id;
-    if (body.id !== +id) {
-      return res.sendStatus(409);
-    }
-    pedir('metas', id, (err, meta) => {
-      if (err) { 
-      return next(err);
+  router.put("/:id", async (req, res) => {
+    try {
+      const id = req.params.id;
+      let { detalles, periodo, eventos, icono, meta, plazo, completado, cuenta_id } = req.body;
+  
+      // 🔥 Convertir `cuenta_id` a null si es un string "null" o undefined
+      if (!cuenta_id || cuenta_id === "null") {
+        cuenta_id = null;
+      } else {
+        cuenta_id = parseInt(cuenta_id, 10);
+        if (isNaN(cuenta_id)) cuenta_id = null;
       }
-      if (!meta.length) {
-        return res.sendStatus(404);
-      }
-      actualizar('metas', id, body, (err, actualizada) => {
-        if (err) {
-          return next(err);
+  
+      // 🔥 Convertir valores numéricos correctamente
+      eventos = parseInt(eventos, 10) || null;
+      meta = parseInt(meta, 10) || null;
+      completado = parseInt(completado, 10) || null;
+  
+      // 🔥 Validar formato de fecha
+      if (plazo) {
+        const fechaValida = new Date(plazo);
+        if (isNaN(fechaValida.getTime())) {
+          return res.status(400).json({ error: "Formato de fecha inválido en 'plazo'" });
         }
-        res.send(actualizada);
-      });
-    });
+        plazo = fechaValida.toISOString().split("T")[0];
+      }
+  
+      // 🔥 Verificar si el ID existe
+      const resultado = await pool.query("SELECT * FROM metas WHERE id = $1", [id]);
+      if (resultado.rows.length === 0) {
+        return res.status(404).json({ error: "Meta no encontrada" });
+      }
+  
+      // 🔥 Ejecutar la actualización correctamente
+      const query = `
+        UPDATE metas 
+        SET detalles = $1, periodo = $2, eventos = $3, icono = $4, meta = $5, plazo = $6, completado = $7, cuenta_id = $8
+        WHERE id = $9
+        RETURNING *;
+      `;
+  
+      const values = [detalles, periodo, eventos, icono, meta, plazo, completado, cuenta_id, id];
+  
+      const updateResult = await pool.query(query, values);
+      res.json(updateResult.rows[0]);
+  
+    } catch (error) {
+      console.error("🔥 Error al actualizar meta:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    }
   });
+  
 
 /* DELETE Borrar meta */
 router.delete('/:id', function (req, res, next) {

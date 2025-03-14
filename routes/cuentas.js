@@ -11,60 +11,75 @@ router.post(
   "/signup",
   body("usuario").isEmail(),
   body("clave").isLength({ min: 5 }),
-  function (req, res, next) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-    const nuevaCuenta = req.body;
-    bcrypt.hash(nuevaCuenta.clave, 12, function (err, hash) {
-      if (err) {
-        return next(err);
+  async function (req, res, next) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
       }
-      crear(
-        "cuentas",
-        { usuario: nuevaCuenta.usuario, hash },
-        (err, cuenta) => {
-          if (err) {
-            return next(err);
-          }
-          let ficha = crearFicha(cuenta.usuario);
-          res.send({ token: ficha });
-        }
-      );
-    });
+
+      const nuevaCuenta = req.body;
+      const hash = await bcrypt.hash(nuevaCuenta.clave, 12);
+      crear("cuentas", { usuario: nuevaCuenta.usuario, hash }, async (err, cuenta) => {
+        if (err) return next(err);
+        
+        const ficha = await crearFicha(cuenta.usuario);
+        res.send({ token: ficha });
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 );
+
 
 /* POST Login */
 router.post(
   "/login",
   body("usuario").isEmail(),
   body("clave").isLength({ min: 5 }),
-  function (req, res, next) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-    const login = req.body;
-    pedirCuenta(login.usuario, (err, [cuenta]) => {
-      if (err) return next(err);
-      if (!cuenta) return res.sendStatus(404);
-      bcrypt.compare(login.clave, cuenta.hash, function (err, result) {
+  async function (req, res, next) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const login = req.body;
+      pedirCuenta(login.usuario, async (err, [cuenta]) => {
         if (err) return next(err);
+        if (!cuenta) return res.sendStatus(404);
+
+        const result = await bcrypt.compare(login.clave, cuenta.hash);
         if (!result) return res.sendStatus(401);
-        let ficha = crearFicha(login.usuario);
+
+        const ficha = await crearFicha(login.usuario);
         res.send({ token: ficha });
       });
-    });
-  });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
   
   function crearFicha(email) {
-    let ficha = jwt.sign({
-      exp: Math.floor(Date.now() / 1000) + (60 * 60),
-      usuario: email
-    }, 'secreto');
-    return ficha;
+    return new Promise((resolve, reject) => {
+      pedirCuenta(email, (err, [cuenta]) => {
+        if (err) return reject(err);
+        if (!cuenta) return reject(new Error("Cuenta no encontrada"));
+  
+        let ficha = jwt.sign(
+          {
+            exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hora
+            usuario: email,
+            id: cuenta.id, // Agregar el ID de la cuenta
+          },
+          "secreto"
+        );
+        resolve(ficha);
+      });
+    });
   }
   
 

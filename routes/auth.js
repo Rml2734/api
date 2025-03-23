@@ -5,6 +5,14 @@ const nodemailer = require("nodemailer");
 const jwt = require('jsonwebtoken'); // Importamos jwt para manejar la autenticación
 const db = require("../db/configuracion");
 
+// 🔥 Manejar solicitudes OPTIONS (CORS Preflight)
+router.options("/recuperar-clave", (req, res) => {
+  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+  res.header("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  res.sendStatus(204);
+});
+
 // Ruta para solicitar recuperación de contraseña
 router.post("/recuperar-clave", async (req, res) => {
     const { email } = req.body;
@@ -19,20 +27,20 @@ router.post("/recuperar-clave", async (req, res) => {
 
         // Generar un código de recuperación aleatorio
         const codigoRecuperacion = Math.floor(100000 + Math.random() * 900000);
-        await pool.query("UPDATE cuentas SET codigo_recuperacion = $1 WHERE usuario = $2", [codigoRecuperacion, email]);
+        await db.query("UPDATE cuentas SET codigo_recuperacion = $1 WHERE usuario = $2", [codigoRecuperacion, email]);
 
-        // Configurar el transporte de correo
+        // 🔥 Configuración real de Nodemailer (usa variables de entorno)
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
-                user: "tu-email@gmail.com",
-                pass: "tu-contraseña"  // Usa variables de entorno en producción
+                user: process.env.GMAIL_USER, // Ej: "tuapp@gmail.com"
+                pass: process.env.GMAIL_APP_PASSWORD // Contraseña de aplicación
             }
         });
 
         // Enviar el correo con el código de recuperación
         await transporter.sendMail({
-            from: "tu-email@gmail.com",
+            from: process.env.GMAIL_USER,
             to: email,
             subject: "Recuperación de contraseña",
             text: `Tu código de recuperación es: ${codigoRecuperacion}`
@@ -40,6 +48,7 @@ router.post("/recuperar-clave", async (req, res) => {
 
         res.json({ mensaje: "Correo enviado con éxito." });
     } catch (error) {
+        console.error("🔥 Error en /recuperar-clave:", error);
         res.status(500).json({ error: "Error en el servidor." });
     }
 });
@@ -47,13 +56,14 @@ router.post("/recuperar-clave", async (req, res) => {
 // Endpoint para refrescar el token
 router.post("/refresh-token", (req, res) => {
     const { refreshToken } = req.body;
-    if (!refreshToken) return res.status(403).send("Refresh token requerido");
+    if (!refreshToken) return res.status(403).json({ error: "Refresh token requerido" });
   
-    jwt.verify(refreshToken, 'REFRESH_TOKEN_SECRET', (err, user) => {
+    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
       if (err) return res.sendStatus(403);
-      const newToken = jwt.sign({ userId: user.id }, 'JWT_SECRET', { expiresIn: '1h' });
+      const newToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
       res.json({ token: newToken });
     });
   });
+  
 
 module.exports = router;

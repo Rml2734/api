@@ -1,57 +1,65 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
-const { expressjwt: jwt } = require('express-jwt');
-const cors = require('cors');
+const cors = require("cors");
+var createError = require("http-errors");
+var express = require("express");
+var path = require("path");
+var cookieParser = require("cookie-parser");
+var logger = require("morgan");
+const { expressjwt: jwt } = require("express-jwt");
 
-var indexRouter = require('./routes/index');
-var metasRouter = require('./routes/metas');
-var cuentasRouter = require('./routes/cuentas');
-var authRouter = require('./routes/auth'); // 🔥 Importamos auth.js
+var indexRouter = require("./routes/index");
+var metasRouter = require("./routes/metas");
+var cuentasRouter = require("./routes/cuentas");
+var authRouter = require("./routes/auth"); // 🔥 Importamos auth.js
 
 var app = express();
 
-app.use(logger('dev'));
+// 🔥 Middleware CORS debe estar al inicio
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Debe coincidir con el puerto de tu frontend
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Authorization", "Content-Type"],
+  })
+);
+
+// 🔥 Middlewares de Express (después de CORS)
+app.use(express.static(path.join(__dirname, "public")));
+app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
 
-// Middleware de autenticación JWT, excluyendo rutas públicas
-app.use(jwt({ secret: 'secreto', algorithms: ['HS256'] }).unless({
-  path: ['/api/signup', '/api/login', '/api/recuperar-clave' ]})); // 🔥 Permitimos la recuperación de clave sin autenticación
+//🔐 Middleware de autenticación JWT, excluyendo rutas públicas
+app.use(
+  jwt({
+    secret: "secreto",
+    algorithms: ["HS256"],
+    requestProperty: "auth",
+  }).unless({
+    path: [
+      { url: '/api/signup', methods: ['POST'] },
+    { url: '/api/login', methods: ['POST'] },
+    { url: '/api/recuperar-clave', methods: ['POST', 'OPTIONS'] }
+    ],
+  })
+); // 🔥 Permitimos la recuperación de clave sin autenticación
 
-app.use('/', indexRouter);
-app.use('/api/metas', metasRouter);
-app.use('/api', cuentasRouter);
-app.use('/api', authRouter); // 🔥 Agregamos la ruta de autenticación
-app.use(cors({
-  origin: 'http://localhost:5173', // Debe coincidir con el puerto de tu frontend
-  credentials: true
-}));
+// Rutas
+app.use("/", indexRouter);
+app.use("/api/metas", metasRouter);
+app.use("/api", cuentasRouter);
+app.use("/api", authRouter); // 🔥 Agregamos la ruta de autenticación
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
-});
+// 🔥 Manejador de errores mejorado (todo en JSON)
+app.use(function (err, req, res, next) {
+  console.error("🔥 Error en el backend:", err); 
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  //console.error("🔥 Error en el backend:", err); // Agrega este log para ver el error real
-  res.locals.message = err.message;
-  //console.log(err);
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-
-   console.error("🔥 Error en el backend:", err); // Log de errores en consola
-
-  // render the error page
-  res.status(err.status || 500);
-  console.log(err);
-  res.send('error');
+  // Respuesta estructurada
+  res.status(err.status || 500).json({
+    error: err.message || "Error interno del servidor",
+    detalles: req.app.get("env") === "development" ? err.stack : undefined
+  });
 });
 
 module.exports = app;

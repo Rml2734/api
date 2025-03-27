@@ -16,7 +16,7 @@ var app = express();
 // 🔥 Middleware CORS debe estar al inicio
 app.use(
   cors({
-    origin: "http://localhost:5173", // Debe coincidir con el puerto de tu frontend
+    origin: "http://localhost:5173", // Debe coincidir con el puerto de tu frontend( Desarrollo )
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Authorization", "Content-Type"],

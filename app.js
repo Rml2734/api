@@ -44,10 +44,10 @@ app.use(
     requestProperty: "auth",
   }).unless({
     path: [
-      { url: '/', methods: ['GET'] }, // 🔥 Excluir ruta raíz
-      { url: "/api/signup", methods: ["POST"] },
-      { url: "/api/login", methods: ["POST"] },
-      { url: "/api/recuperar-clave", methods: ["POST", "OPTIONS"] },
+      { url: '/', methods: ['GET', 'HEAD', 'OPTIONS'] }, // 🔥 Excluir todos los métodos
+      { url: '/api/signup', methods: ['POST'] },
+      { url: '/api/login', methods: ['POST'] },
+      { url: '/api/recuperar-clave', methods: ['POST', 'OPTIONS'] }
     ],
   })
 ); // 🔥 Permitimos la recuperación de clave sin autenticación

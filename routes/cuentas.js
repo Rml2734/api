@@ -117,20 +117,24 @@ router.delete('/usuarios/:id', autenticar, async (req, res) => {
 
 
   
-  // En la función crearFicha (cuentas.js)
+ // En la función crearFicha:
 function crearFicha(email) {
   return new Promise((resolve, reject) => {
     pedirCuenta(email, (err, [cuenta]) => {
       if (err) return reject(err);
       if (!cuenta) return reject(new Error("Cuenta no encontrada"));
 
-      // 🔥 Verificar que cuenta.id existe y es correcto
-      console.log("ID de cuenta generado:", cuenta.id); // 👈 Agrega este log
+      // 🔥 Verificación adicional del ID
+      if (!cuenta.id) {
+        console.error("❌ Error: La cuenta no tiene ID");
+        return reject(new Error("Error en el servidor"));
+      }
+
       let ficha = jwt.sign(
         {
-          exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hora
+          exp: Math.floor(Date.now() / 1000) + 60 * 60,
           usuario: email,
-          id: cuenta.id, // 🔥 ¡Este es el cuenta_id que necesitamos!
+          id: cuenta.id // 🔥 Usar el ID correcto
         },
         "secreto"
       );
@@ -138,6 +142,5 @@ function crearFicha(email) {
     });
   });
 }
-  
 
 module.exports = router;

@@ -14,12 +14,18 @@ var authRouter = require("./routes/auth"); // 🔥 Importamos auth.js
 var app = express();
 
 // 🔥 Middleware CORS debe estar al inicio
+// 🔥 Configuración CORS actualizada
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://metasapp2025.onrender.com" // Tu frontend en producción
+];
+
 app.use(
   cors({
-    origin: "http://localhost:5173", // Debe coincidir con el puerto de tu frontend( Desarrollo )
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Authorization", "Content-Type"],
+    allowedHeaders: ["Authorization", "Content-Type"]
   })
 );
 
@@ -60,6 +66,12 @@ app.use(function (err, req, res, next) {
     error: err.message || "Error interno del servidor",
     detalles: req.app.get("env") === "development" ? err.stack : undefined
   });
+});
+
+// 🔥 Agrega esto al final (antes de module.exports):
+const port = process.env.PORT || 10000;
+app.listen(port, () => {
+  console.log(`✅ Servidor activo en puerto ${port}`);
 });
 
 module.exports = app;

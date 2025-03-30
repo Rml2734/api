@@ -17,7 +17,7 @@ var app = express();
 // 🔥 Configuración CORS actualizada
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://metasapp2025.onrender.com" // Tu frontend en producción
+  "https://metasapp2025.onrender.com", // Tu frontend en producción
 ];
 
 app.use(
@@ -25,7 +25,7 @@ app.use(
     origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Authorization", "Content-Type"]
+    allowedHeaders: ["Authorization", "Content-Type"],
   })
 );
 
@@ -44,9 +44,10 @@ app.use(
     requestProperty: "auth",
   }).unless({
     path: [
-      { url: '/api/signup', methods: ['POST'] },
-    { url: '/api/login', methods: ['POST'] },
-    { url: '/api/recuperar-clave', methods: ['POST', 'OPTIONS'] }
+      { url: '/', methods: ['GET'] }, // 🔥 Excluir ruta raíz
+      { url: "/api/signup", methods: ["POST"] },
+      { url: "/api/login", methods: ["POST"] },
+      { url: "/api/recuperar-clave", methods: ["POST", "OPTIONS"] },
     ],
   })
 ); // 🔥 Permitimos la recuperación de clave sin autenticación
@@ -59,12 +60,12 @@ app.use("/api", authRouter); // 🔥 Agregamos la ruta de autenticación
 
 // 🔥 Manejador de errores mejorado (todo en JSON)
 app.use(function (err, req, res, next) {
-  console.error("🔥 Error en el backend:", err); 
+  console.error("🔥 Error en el backend:", err);
 
   // Respuesta estructurada
   res.status(err.status || 500).json({
     error: err.message || "Error interno del servidor",
-    detalles: req.app.get("env") === "development" ? err.stack : undefined
+    detalles: req.app.get("env") === "development" ? err.stack : undefined,
   });
 });
 

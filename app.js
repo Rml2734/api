@@ -25,8 +25,9 @@ app.use(
     origin: (origin, callback) => {
       // Permite solicitudes sin origen (como apps móviles o curl)
       if (!origin) return callback(null, true);
-      
-      if (allowedOrigins.includes(origin)) {
+      const normalizedOrigin = origin.replace(/\/$/, "");
+      console.log("Origen recibido:", origin); // 🔥 Agrega esto
+      if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error("Origen no permitido por CORS"));

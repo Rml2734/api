@@ -9,28 +9,26 @@ const { expressjwt: jwt } = require("express-jwt");
 var indexRouter = require("./routes/index");
 var metasRouter = require("./routes/metas");
 var cuentasRouter = require("./routes/cuentas");
-var authRouter = require("./routes/auth"); // 🔥 Importamos auth.js
+var authRouter = require("./routes/auth");
 
 var app = express();
 
-// 🔥 Middleware CORS debe estar al inicio
-// 🔥 Configuración CORS actualizada
+// 🔥 Configuración CORS con opciones mejoradas
 const allowedOrigins = [
-  "http://localhost:5173", //Desarrollo
-  "https://metasapp2025.onrender.com", // Tu frontend en producción
+  "http://localhost:5173", // Desarrollo
+  "https://metasapp2025.onrender.com", // Producción
 ];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Permite solicitudes sin origen (como apps móviles o curl)
       if (!origin) return callback(null, true);
       const normalizedOrigin = origin.replace(/\/$/, "");
-      console.log("Origen recibido:", origin); // 🔥 Agrega esto
-      if (!origin || allowedOrigins.includes(origin)) {
+      console.log("🔹 Origen recibido:", origin);
+      if (allowedOrigins.includes(normalizedOrigin)) {
         callback(null, true);
       } else {
-        callback(new Error("Origen no permitido por CORS"));
+        callback(new Error("🚫 Origen no permitido por CORS"));
       }
     },
     credentials: true,
@@ -39,18 +37,24 @@ app.use(
   })
 );
 
+app.options("*", cors()); // 🔥 Importante para preflight CORS
 
+// 🔥 Servir archivos estáticos correctamente
+app.use(express.static(path.join(__dirname, "public"), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith(".css")) {
+      res.setHeader("Content-Type", "text/css");
+    }
+  }
+}));
 
-app.options('*', cors()); // 🔥 ¡Clave para preflight!
-
-// 🔥 Middlewares de Express (después de CORS)
-app.use(express.static(path.join(__dirname, "public")));
+// Middlewares
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-//🔐 Middleware de autenticación JWT, excluyendo rutas públicas
+// 🔐 Middleware de autenticación JWT
 app.use(
   jwt({
     secret: "secreto",
@@ -58,33 +62,31 @@ app.use(
     requestProperty: "auth",
   }).unless({
     path: [
-      { url: '/', methods: ['GET', 'HEAD', 'OPTIONS'] },
-      { url: '/api/signup', methods: ['POST', 'OPTIONS'] }, // 🔥 Agrega OPTIONS
-      { url: '/api/login', methods: ['POST', 'OPTIONS'] },    // 🔥 Agrega OPTIONS
-      { url: '/api/recuperar-clave', methods: ['POST', 'OPTIONS'] },
-      { url: '*', methods: ['OPTIONS'] } // 🔥 ¡Permite OPTIONS en todas las rutas!
+      { url: "/", methods: ["GET", "HEAD", "OPTIONS"] },
+      { url: "/api/signup", methods: ["POST", "OPTIONS"] },
+      { url: "/api/login", methods: ["POST", "OPTIONS"] },
+      { url: "/api/recuperar-clave", methods: ["POST", "OPTIONS"] },
+      { url: "*", methods: ["OPTIONS"] }
     ],
   })
-); // 🔥 Permitimos la recuperación de clave sin autenticación
+);
 
 // Rutas
 app.use("/", indexRouter);
 app.use("/api/metas", metasRouter);
 app.use("/api", cuentasRouter);
-app.use("/api", authRouter); // 🔥 Agregamos la ruta de autenticación
+app.use("/api", authRouter);
 
-// 🔥 Manejador de errores mejorado (todo en JSON)
+// 🔥 Manejador de errores mejorado
 app.use(function (err, req, res, next) {
   console.error("🔥 Error en el backend:", err);
-
-  // Respuesta estructurada
   res.status(err.status || 500).json({
     error: err.message || "Error interno del servidor",
     detalles: req.app.get("env") === "development" ? err.stack : undefined,
   });
 });
 
-// 🔥 Agrega esto al final (antes de module.exports):
+// 🔥 Iniciar servidor
 const port = process.env.PORT || 10000;
 app.listen(port, () => {
   console.log(`✅ Servidor activo en puerto ${port}`);

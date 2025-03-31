@@ -29,6 +29,8 @@ app.use(
   })
 );
 
+app.options('*', cors()); // 🔥 ¡Clave para preflight!
+
 // 🔥 Middlewares de Express (después de CORS)
 app.use(express.static(path.join(__dirname, "public")));
 app.use(logger("dev"));

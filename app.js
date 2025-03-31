@@ -16,17 +16,29 @@ var app = express();
 // 🔥 Middleware CORS debe estar al inicio
 // 🔥 Configuración CORS actualizada
 const allowedOrigins = [
+  "http://localhost:5173", //Desarrollo
   "https://metasapp2025.onrender.com", // Tu frontend en producción
 ];
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Permite solicitudes sin origen (como apps móviles o curl)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Origen no permitido por CORS"));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Authorization", "Content-Type"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+
 
 app.options('*', cors()); // 🔥 ¡Clave para preflight!
 
@@ -45,10 +57,11 @@ app.use(
     requestProperty: "auth",
   }).unless({
     path: [
-      { url: '/', methods: ['GET', 'HEAD', 'OPTIONS'] }, // 🔥 Excluir todos los métodos
-      { url: '/api/signup', methods: ['POST'] },
-      { url: '/api/login', methods: ['POST'] },
-      { url: '/api/recuperar-clave', methods: ['POST', 'OPTIONS'] }
+      { url: '/', methods: ['GET', 'HEAD', 'OPTIONS'] },
+      { url: '/api/signup', methods: ['POST', 'OPTIONS'] }, // 🔥 Agrega OPTIONS
+      { url: '/api/login', methods: ['POST', 'OPTIONS'] },    // 🔥 Agrega OPTIONS
+      { url: '/api/recuperar-clave', methods: ['POST', 'OPTIONS'] },
+      { url: '*', methods: ['OPTIONS'] } // 🔥 ¡Permite OPTIONS en todas las rutas!
     ],
   })
 ); // 🔥 Permitimos la recuperación de clave sin autenticación

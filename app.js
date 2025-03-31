@@ -16,7 +16,6 @@ var app = express();
 // 🔥 Middleware CORS debe estar al inicio
 // 🔥 Configuración CORS actualizada
 const allowedOrigins = [
-  "http://localhost:5173",
   "https://metasapp2025.onrender.com", // Tu frontend en producción
 ];
 

@@ -29,32 +29,21 @@ app.use(cors({
 }));
 
 // 🛡️ Headers Manuales para CORS
-app.use((req, res, next) => {
+app.options("*", (req, res) => {
   res.header("Access-Control-Allow-Origin", "https://metasapp2025.onrender.com");
-  res.header("Access-Control-Allow-Credentials", "true");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-  
-  // Manejar preflight OPTIONS
-  if (req.method === "OPTIONS") {
-    return res.status(204).send();
-  }
-  next();
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.status(204).send();
 });
 
 // 📁 Servir Archivos Estáticos (Fix MIME type)
 app.use(express.static(path.join(__dirname, "dist"), {
   setHeaders: (res, filePath) => {
-    const mimeTypes = {
-      ".css": "text/css",
-      ".js": "application/javascript",
-      ".png": "image/png",
-      ".svg": "image/svg+xml"
-    };
-    const ext = path.extname(filePath).toLowerCase();
-    if (mimeTypes[ext]) {
-      res.setHeader("Content-Type", mimeTypes[ext]);
-      res.setHeader("Cache-Control", "public, max-age=31536000"); // Cache para producción
+    const ext = path.extname(filePath);
+    if (ext === ".css") {
+      res.setHeader("Content-Type", "text/css");
+    } else if (ext === ".js") {
+      res.setHeader("Content-Type", "application/javascript");
     }
   }
 }));

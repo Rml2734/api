@@ -15,25 +15,17 @@ var app = express();
 
 // 🔥 Configuración CORS con opciones mejoradas
 const allowedOrigins = [
-  "http://localhost:5173", // Desarrollo
-  "https://metasapp2025.onrender.com", // Producción
+  "http://localhost:5173",
+  "https://metasapp2025.onrender.com",
+  "https://api-lays.onrender.com"
 ];
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      const normalizedOrigin = origin.replace(/\/$/, "");
-      console.log("🔹 Origen recibido:", origin);
-      if (allowedOrigins.includes(normalizedOrigin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("🚫 Origen no permitido por CORS"));
-      }
-    },
-    credentials: true,
+    origin: allowedOrigins, // Lista de dominios permitidos
+    credentials: true, // Permite cookies y encabezados de autenticación
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
   })
 );
 
@@ -67,7 +59,7 @@ app.use(
       { url: "/api/signup", methods: ["POST", "OPTIONS"] },
       { url: "/api/login", methods: ["POST", "OPTIONS"] },
       { url: "/api/recuperar-clave", methods: ["POST", "OPTIONS"] },
-      { url: "*", methods: ["OPTIONS"] }
+      { url: /^\/public\/.*/, methods: ["GET"] }
     ],
   })
 );

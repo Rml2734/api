@@ -20,27 +20,33 @@ const allowedOrigins = [
   "http://localhost:5173"
 ];
 
+// 🔥 Middleware CORS mejorado
 app.use(cors({
   origin: allowedOrigins,
   credentials: true,
-  methods: "GET,POST,PUT,DELETE,OPTIONS",
-  allowedHeaders: "Content-Type,Authorization,Origin,X-Requested-With",
-  optionsSuccessStatus: 204
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
 }));
 
 // 🛡️ Headers Manuales para CORS
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://metasapp2025.onrender.com");
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Expose-Headers", "Authorization");
-  next();
+app.options("*", (req, res) => {
+  res.header("Access-Control-Allow-Origin", allowedOrigins);
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.status(204).send();
 });
 
 // 📁 Servir Archivos Estáticos (Fix MIME type)
 app.use(express.static(path.join(__dirname, "dist"), {
   setHeaders: (res, filePath) => {
-    if (filePath.endsWith(".css")) {
-      res.setHeader("Content-Type", "text/css");
+    const mimeTypes = {
+      ".css": "text/css",
+      ".js": "application/javascript",
+      ".png": "image/png"
+    };
+    const ext = path.extname(filePath);
+    if (mimeTypes[ext]) {
+      res.setHeader("Content-Type", mimeTypes[ext]);
     }
   }
 }));
@@ -65,6 +71,7 @@ app.use(
     path: [
       { url: "/api/signup", methods: ["POST"] },
       { url: "/api/login", methods: ["POST"] },
+      { url: "/api/recuperar-clave", methods: ["POST", "OPTIONS"] },
       { url: "/", methods: ["GET"] },
       { url: /\.(css|js|png|jpg|ico|svg)$/, methods: ["GET"] }
     ]

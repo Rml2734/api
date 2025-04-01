@@ -1,23 +1,23 @@
 const cors = require("cors");
-var createError = require("http-errors");
-var express = require("express");
-var path = require("path");
-var cookieParser = require("cookie-parser");
-var logger = require("morgan");
+const createError = require("http-errors");
+const express = require("express");
+const path = require("path");
+const cookieParser = require("cookie-parser");
+const logger = require("morgan");
 const { expressjwt: jwt } = require("express-jwt");
 
-var indexRouter = require("./routes/index");
-var metasRouter = require("./routes/metas");
-var cuentasRouter = require("./routes/cuentas");
-var authRouter = require("./routes/auth");
+// Routers
+const indexRouter = require("./routes/index");
+const metasRouter = require("./routes/metas");
+const cuentasRouter = require("./routes/cuentas");
+const authRouter = require("./routes/auth");
 
-var app = express();
+const app = express();
 
-// 🔥 Configuración CORS con opciones mejoradas
+// 🔥🔥 Configuración CORS Definitiva
 const allowedOrigins = [
-  "http://localhost:5173",
   "https://metasapp2025.onrender.com",
-  "https://api-lays.onrender.com"
+  "http://localhost:5173"
 ];
 
 app.use(cors({
@@ -28,11 +28,9 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
-app.options("*", cors()); // 🔥 Importante para preflight CORS
-
 // 🛡️ Headers Manuales para CORS
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://metasapp2025.onrender.com", "http://localhost:5173");
+  res.header("Access-Control-Allow-Origin", "https://metasapp2025.onrender.com");
   res.header("Access-Control-Allow-Credentials", "true");
   res.header("Access-Control-Expose-Headers", "Authorization");
   next();
@@ -44,11 +42,8 @@ app.use(express.static(path.join(__dirname, "dist"), {
     if (filePath.endsWith(".css")) {
       res.setHeader("Content-Type", "text/css");
     }
-    // Añade otros tipos MIME si es necesario
   }
 }));
-
-app.use(express.static(path.join(__dirname, "dist")));
 
 // Middlewares
 app.use(logger("dev"));
@@ -56,20 +51,23 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-// 🔐 Middleware de autenticación JWT
+// 🔐 Configuración JWT Actualizada
 app.use(
   jwt({
-    secret: "secreto",
+    secret: process.env.JWT_SECRET || "secreto",
     algorithms: ["HS256"],
     requestProperty: "auth",
+    getToken: (req) => {
+      // Soporte para token en cookies y headers
+      return req.cookies.token || req.headers.authorization?.split(' ')[1];
+    }
   }).unless({
     path: [
-      { url: "/", methods: ["GET", "HEAD", "OPTIONS"] },
-      { url: "/api/signup", methods: ["POST", "OPTIONS"] },
-      { url: "/api/login", methods: ["POST", "OPTIONS"] },
-      { url: "/api/recuperar-clave", methods: ["POST", "OPTIONS"] },
-      { url: /^\/public\/.*/, methods: ["GET"] }
-    ],
+      { url: "/api/signup", methods: ["POST"] },
+      { url: "/api/login", methods: ["POST"] },
+      { url: "/", methods: ["GET"] },
+      { url: /\.(css|js|png|jpg|ico|svg)$/, methods: ["GET"] }
+    ]
   })
 );
 
@@ -80,11 +78,11 @@ app.use("/api", cuentasRouter);
 app.use("/api", authRouter);
 
 // 🚨 Manejador de Errores Mejorado
-app.use(function (err, req, res, next) {
-  console.error("🔥 Error en el backend:", err);
+app.use((err, req, res, next) => {
+  console.error("🔥 Error Global:", err);
   res.status(err.status || 500).json({
-    error: err.message || "Error interno del servidor",
-    detalles: req.app.get("env") === "development" ? err.stack : undefined,
+    error: err.message || "Error interno",
+    stack: process.env.NODE_ENV === "development" ? err.stack : undefined
   });
 });
 

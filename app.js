@@ -29,11 +29,17 @@ app.use(cors({
 }));
 
 // 🛡️ Headers Manuales para CORS
-app.options("*", (req, res) => {
-  res.header("Access-Control-Allow-Origin", allowedOrigins);
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://metasapp2025.onrender.com");
+  res.header("Access-Control-Allow-Credentials", "true");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.status(204).send();
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+  
+  // Manejar preflight OPTIONS
+  if (req.method === "OPTIONS") {
+    return res.status(204).send();
+  }
+  next();
 });
 
 // 📁 Servir Archivos Estáticos (Fix MIME type)
@@ -42,11 +48,13 @@ app.use(express.static(path.join(__dirname, "dist"), {
     const mimeTypes = {
       ".css": "text/css",
       ".js": "application/javascript",
-      ".png": "image/png"
+      ".png": "image/png",
+      ".svg": "image/svg+xml"
     };
-    const ext = path.extname(filePath);
+    const ext = path.extname(filePath).toLowerCase();
     if (mimeTypes[ext]) {
       res.setHeader("Content-Type", mimeTypes[ext]);
+      res.setHeader("Cache-Control", "public, max-age=31536000"); // Cache para producción
     }
   }
 }));
@@ -64,16 +72,16 @@ app.use(
     algorithms: ["HS256"],
     requestProperty: "auth",
     getToken: (req) => {
-      // Soporte para token en cookies y headers
-      return req.cookies.token || req.headers.authorization?.split(' ')[1];
+      // Buscar token en cookies, headers y query params
+      return req.cookies?.token 
+        || req.headers.authorization?.split(' ')[1] 
+        || req.query.token;
     }
   }).unless({
     path: [
-      { url: "/api/signup", methods: ["POST"] },
-      { url: "/api/login", methods: ["POST"] },
-      { url: "/api/recuperar-clave", methods: ["POST", "OPTIONS"] },
-      { url: "/", methods: ["GET"] },
-      { url: /\.(css|js|png|jpg|ico|svg)$/, methods: ["GET"] }
+      { url: /\/api\/(signup|login)/, methods: ["POST"] }, // Rutas públicas
+      { url: /\.(css|js|png|jpg|ico|svg)$/ }, // Archivos estáticos
+      { url: "/", methods: ["GET"] }
     ]
   })
 );

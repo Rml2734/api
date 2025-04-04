@@ -132,7 +132,7 @@ function crearFicha(email) {
 
       let ficha = jwt.sign(
         {
-          exp: Math.floor(Date.now() / 1000) + 60 * 60,
+          exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hora
           usuario: email,
           id: cuenta.id
         },

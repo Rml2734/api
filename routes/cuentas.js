@@ -134,9 +134,9 @@ function crearFicha(email) {
         {
           exp: Math.floor(Date.now() / 1000) + 60 * 60,
           usuario: email,
-          id: cuenta.id // 🔥 Usar el ID correcto
+          id: cuenta.id
         },
-        "secreto"
+        process.env.JWT_SECRET || "secreto" // 🔥 Usa la variable de entorno
       );
       resolve(ficha);
     });

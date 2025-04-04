@@ -22,7 +22,7 @@ const allowedOrigins = [
 
 // 🔥 Middleware CORS mejorado
 const corsOptions = {
-  origin: ['https://metasapp2025.onrender.com', 'http://localhost:5173'],
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -31,6 +31,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+/*
 // 🛡️ Headers Manuales para CORS
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'https://metasapp2025.onrender.com', "http://localhost:5173");
@@ -45,12 +46,13 @@ app.use((req, res, next) => {
   
   next();
 });
+*/
 
 // 📁 Servir Archivos Estáticos (Fix MIME type)
-app.use(express.static(path.join(__dirname, 'dist'), {
+app.use(express.static(path.join(__dirname, 'dist','index.html'), {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css');
+      res.setHeader('Content-Type', 'text/css'); // 🔥 Corrige el MIME type
     } else if (filePath.endsWith('.js')) {
       res.setHeader('Content-Type', 'application/javascript');
     }

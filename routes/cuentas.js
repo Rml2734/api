@@ -136,7 +136,8 @@ function crearFicha(email) {
           usuario: email,
           id: cuenta.id
         },
-        process.env.JWT_SECRET || "secreto" // 🔥 Usa la variable de entorno
+        process.env.JWT_SECRET || "secreto", // 🔥 Usa la variable de entorno
+        { algorithm: 'HS256' } // 🔥 Especifica el algoritmo
       );
       resolve(ficha);
     });

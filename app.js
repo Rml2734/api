@@ -25,7 +25,8 @@ const corsOptions = {
   origin: allowedOrigins, // ✅ Usa la lista de orígenes permitidos
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization',  'Origin'],
+  optionsSuccessStatus: 200 // 🔥 Necesario para algunas configuraciones
 };
 
 app.use(cors(corsOptions));  // ✅ Aplica solo esta configuración
@@ -35,7 +36,9 @@ app.use(cors(corsOptions));  // ✅ Aplica solo esta configuración
 app.use(express.static(path.join(__dirname, 'dist'), {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css'); // ✅ Fuerza el MIME type correcto
+      res.setHeader('Content-Type', 'text/css');
+    } else if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript'); // ✅ Previene errores futuros
     }
   }
 }));

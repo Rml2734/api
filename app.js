@@ -21,29 +21,38 @@ const allowedOrigins = [
 ];
 
 // 🔥 Middleware CORS mejorado
-app.use(cors({
-  origin: allowedOrigins,
+const corsOptions = {
+  origin: ['https://metasapp2025.onrender.com', 'http://localhost:5173'],
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
-}));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 
 // 🛡️ Headers Manuales para CORS
-app.options("*", (req, res) => {
-  res.header("Access-Control-Allow-Origin", "https://metasapp2025.onrender.com");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.status(204).send();
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://metasapp2025.onrender.com', "http://localhost:5173");
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
 });
 
 // 📁 Servir Archivos Estáticos (Fix MIME type)
-app.use(express.static(path.join(__dirname, "dist"), {
+app.use(express.static(path.join(__dirname, 'dist'), {
   setHeaders: (res, filePath) => {
-    const ext = path.extname(filePath);
-    if (ext === ".css") {
-      res.setHeader("Content-Type", "text/css");
-    } else if (ext === ".js") {
-      res.setHeader("Content-Type", "application/javascript");
+    if (filePath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
     }
   }
 }));
@@ -61,10 +70,9 @@ app.use(
     algorithms: ["HS256"],
     requestProperty: "auth",
     getToken: (req) => {
-      // Buscar token en cookies, headers y query params
-      return req.cookies?.token 
-        || req.headers.authorization?.split(' ')[1] 
-        || req.query.token;
+      return req.cookies?.token || 
+             req.headers.authorization?.split(' ')[1] || 
+             null;
     }
   }).unless({
     path: [

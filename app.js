@@ -61,8 +61,8 @@ const jwtMiddleware = jwt({
 }).unless({
   path: [
     { url: /\/api\/(signup|login)/, methods: ["POST", "OPTIONS"] },
-    { url: /\.(css|js|png|jpg|ico|svg)$/ },
-    { url: "/", methods: ["GET"] }
+    { url: /\.(css|js|png|jpg|ico|svg)$/, methods: ["GET", "HEAD"] },
+    { url: "/", methods: ["GET", "HEAD"] }
   ]
 });
 

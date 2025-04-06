@@ -5,13 +5,7 @@ const nodemailer = require("nodemailer");
 const jwt = require('jsonwebtoken'); // Importamos jwt para manejar la autenticación
 const db = require("../db/configuracion");
 
-// 🔥 Manejar solicitudes OPTIONS (CORS Preflight)
-router.options("/recuperar-clave", (req, res) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
-  res.header("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type");
-  res.sendStatus(204);
-});
+
 
 // Ruta para solicitar recuperación de contraseña
 router.post("/recuperar-clave", async (req, res) => {

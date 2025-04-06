@@ -22,7 +22,7 @@ const allowedOrigins = [
 
 // 🔥 Middleware CORS mejorado
 const corsOptions = {
-  origin: ["https://metasapp2025.onrender.com", "http://localhost:5173"], // ✅ Usa la lista de orígenes permitidos
+  origin: '*', // ✅ Usa la lista de orígenes permitidos
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization',  'Origin'],

@@ -93,9 +93,9 @@ app.use((req, res, next) => {
 });
 
 // Rutas
+app.use("/api", cuentasRouter);
 app.use("/", indexRouter);
 app.use("/api/metas", metasRouter);
-app.use("/api", cuentasRouter);
 app.use("/api", authRouter);
 
 // Sirve index.html para cualquier ruta no manejada por el API

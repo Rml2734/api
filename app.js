@@ -29,6 +29,12 @@ const corsOptions = {
 
 app.use(cors(corsOptions));   // ✅ Aplica CORS como el primer middleware
 
+// 🔥🔥 NUEVO EXPERIMENTO: Manejar OPTIONS para /api/login directamente
+app.options('/api/login', cors(corsOptions), (req, res) => {
+  console.log("🔥 EXPERIMENTO: Recibida solicitud OPTIONS para /api/login en app.js");
+  res.sendStatus(200);
+});
+
 // 🔥🔥 NUEVO: Ruta OPTIONS de prueba directamente en app.js
 app.options('/api/test-cors', cors(corsOptions), (req, res) => {
   console.log("🧪 Recibida solicitud OPTIONS para /api/test-cors en app.js");

@@ -1,22 +1,31 @@
 var express = require("express");
 var bcrypt = require("bcrypt");
 var jwt = require('jsonwebtoken');
+const cors = require('cors'); // Importa CORS
 
 var router = express.Router();
 const { pedirCuenta, crear } = require("../db/pedidos");
 const { body, validationResult } = require("express-validator");
 const { borrar } = require("../db/pedidos"); // Asegúrate de importar la función de eliminación
 
+// 🔥 Importa la configuración de CORS (asegúrate de que coincida con tu app.js)
+const corsOptions = {
+  origin: ["https://metasapp2025.onrender.com"],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization',  'Origin'],
+  optionsSuccessStatus: 200
+};
 
 // Añadir middleware de autenticación
 const autenticar = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
-  
+
   if (!token) return res.status(401).json({ error: "Acceso no autorizado" });
 
-  jwt.verify(token, "secreto", (err, decoded) => {
+  jwt.verify(token, process.env.JWT_SECRET || "secreto", (err, decoded) => {
     if (err) return res.status(403).json({ error: "Token inválido" });
-    
+
     req.usuario = {
       id: decoded.id,
       email: decoded.usuario
@@ -41,7 +50,7 @@ router.post(
       const hash = await bcrypt.hash(nuevaCuenta.clave, 12);
       crear("cuentas", { usuario: nuevaCuenta.usuario, hash }, async (err, cuenta) => {
         if (err) return next(err);
-        
+
         const ficha = await crearFicha(cuenta.usuario);
         res.send({ token: ficha });
       });
@@ -51,12 +60,17 @@ router.post(
   }
 );
 
+/* OPTIONS para /login */
+router.options('/login', cors(corsOptions), (req, res) => { // 🔥 Añade el manejador OPTIONS
+  res.sendStatus(200);
+});
 
 /* POST Login */
 router.post(
   "/login",
   body("usuario").isEmail(),
   body("clave").isLength({ min: 5 }),
+  cors(corsOptions), // 🔥 Aplica CORS específicamente a esta ruta también (por si acaso)
   async function (req, res, next) {
     try {
       const errors = validationResult(req);
@@ -111,13 +125,7 @@ router.delete('/usuarios/:id', autenticar, async (req, res) => {
 });
 
 
-
-
-
-
-
-  
- // En la función crearFicha:
+// En la función crearFicha:
 function crearFicha(email) {
   return new Promise((resolve, reject) => {
     pedirCuenta(email, (err, [cuenta]) => {

@@ -16,7 +16,8 @@ const app = express();
 
 // 🔥🔥 Configuración CORS Definitiva
 const allowedOrigins = [
-  "https://metasapp2025.onrender.com"
+  "https://metasapp2025.onrender.com",
+  "http://localhost:5173"
 ];
 
 // 🔥 Middleware CORS mejorado

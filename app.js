@@ -21,15 +21,14 @@ const allowedOrigins = [
 
 // 🔥 Middleware CORS mejorado
 const corsOptions = {
-  origin: ["https://metasapp2025.onrender.com"], // ✅ Usa la lista de orígenes permitidos
+  origin: allowedOrigins, // ✅ Usa la lista de orígenes permitidos
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization',  'Origin'],
   optionsSuccessStatus: 200 // 🔥 Necesario para algunas configuraciones
 };
 
-app.use(cors(corsOptions));  // ✅ Aplica solo esta configuración
-
+app.use(cors(corsOptions));   // ✅ Aplica CORS a TODAS las rutas
 
 // 📁 Servir Archivos Estáticos (Fix MIME type)
 app.use(express.static(path.join(__dirname, 'dist'), {
@@ -37,7 +36,7 @@ app.use(express.static(path.join(__dirname, 'dist'), {
     if (filePath.endsWith('.css')) {
       res.setHeader('Content-Type', 'text/css');
     } else if (filePath.endsWith('.js')) {
-      res.setHeader('Content-Type', 'application/javascript'); // ✅ Previene errores futuros
+      res.setHeader('Content-Type', 'application/javascript');
     }
   }
 }));
@@ -48,33 +47,39 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-// 🔐 Configuración JWT Actualizada
+// 🔐 Configuración JWT con Middleware Condicional
 const jwtMiddleware = jwt({
   secret: process.env.JWT_SECRET || "secreto",
   algorithms: ["HS256"],
   requestProperty: "auth",
   getToken: (req) => {
     const token = req.cookies?.token || req.headers.authorization?.split(' ')[1] || null;
-    console.log("🔑 Intentando obtener token:", token, "para la ruta:", req.path, "método:", req.method); // Log
+    console.log("🔑 Intentando obtener token:", token, "para la ruta:", req.path, "método:", req.method);
     return token;
   }
-}).unless({
-  path: [
-    { url: /\/api\/(signup|login)/, methods: ["POST", "OPTIONS"] },
-    { url: /\.(css|js|png|jpg|ico|svg)$/, methods: ["GET", "HEAD"] },
-    { url: "/", methods: ["GET", "HEAD"] }
-  ]
 });
+
+const shouldSkipJwt = (req) => {
+  return (req.method === 'HEAD' && req.path === '/') ||
+         (req.method === 'GET' && req.path === '/') ||
+         /\.(css|js|png|jpg|ico|svg)$/.test(req.path) ||
+         (req.path.startsWith('/api/signup') && req.method === 'POST') ||
+         (req.path.startsWith('/api/login') && req.method === 'POST') ||
+         (req.path.startsWith('/api/signup') && req.method === 'OPTIONS') ||
+         (req.path.startsWith('/api/login') && req.method === 'OPTIONS');
+};
 
 app.use((req, res, next) => {
-  console.log("➡️ Middleware antes de JWT para la ruta:", req.path, "método:", req.method); // Log
-  next();
+  console.log("➡️ Middleware antes de JWT para la ruta:", req.path, "método:", req.method);
+  if (shouldSkipJwt(req)) {
+    console.log("⏭️ Omitiendo verificación JWT para la ruta:", req.path, "método:", req.method);
+    return next();
+  }
+  jwtMiddleware(req, res, next);
 });
 
-app.use(jwtMiddleware);
-
 app.use((err, req, res, next) => {
-  console.log("❗ Error después de JWT para la ruta:", req.path, "método:", req.method, "Error:", err.message); // Log
+  console.log("❗ Error después de JWT para la ruta:", req.path, "método:", req.method, "Error:", err.message);
   if (err.name === 'UnauthorizedError') {
     return res.status(401).json({ message: 'Token inválido o no proporcionado' });
   }
@@ -82,7 +87,7 @@ app.use((err, req, res, next) => {
 });
 
 app.use((req, res, next) => {
-  console.log("➡️ Middleware después de JWT (si no hubo error) para la ruta:", req.path, "método:", req.method); // Log
+  console.log("➡️ Middleware después de JWT (si no hubo error) para la ruta:", req.path, "método:", req.method);
   next();
 });
 

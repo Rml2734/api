@@ -16,18 +16,31 @@ const app = express();
 
 // 🔥🔥 Configuración CORS - LO MÁS TEMPRANO POSIBLE
 const allowedOrigins = [
-  "https://metasapp2025.onrender.com"
+  "https://metasapp2025.onrender.com",
+  "https://api-lqys.onrender.com"
 ];
 
 const corsOptions = {
   origin: allowedOrigins,
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization',  'Origin'],
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));   // ✅ Aplica CORS como el primer middleware
 
-// 🔥🔥 NUEVO: Manejar todas las solicitudes OPTIONS con CORS
-app.options('*', cors(corsOptions));
+// 🔥🔥 NUEVO EXPERIMENTO: Manejar OPTIONS para /api/login directamente
+app.options('/api/login', cors(corsOptions), (req, res) => {
+  console.log("🔥 EXPERIMENTO: Recibida solicitud OPTIONS para /api/login en app.js");
+  res.sendStatus(200);
+});
+
+// 🔥🔥 NUEVO: Ruta OPTIONS de prueba directamente en app.js
+app.options('/api/test-cors', cors(corsOptions), (req, res) => {
+  console.log("🧪 Recibida solicitud OPTIONS para /api/test-cors en app.js");
+  res.sendStatus(200);
+});
 
 // 📁 Servir Archivos Estáticos
 app.use(express.static(path.join(__dirname, 'dist'), {

@@ -15,6 +15,7 @@ const authRouter = require("./routes/auth");
 const app = express();
 
 console.log("--- Aplicación Iniciándose ---"); // Log muy temprano
+console.log("!!! APLICANDO CORS ABIERTO SIMPLE (DEBUG) !!!");
 
 // 🔥🔥 Configuración CORS - LO MÁS TEMPRANO POSIBLE
 const allowedOrigins = [
@@ -41,7 +42,7 @@ const corsOptions = {
 };
 
 console.log("Aplicando middleware CORS global..."); // Log antes de app.use(cors)
-app.use(cors(corsOptions));
+app.use(cors());
 console.log("Middleware CORS global aplicado."); // Log después de app.use(cors)
 
 

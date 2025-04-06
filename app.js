@@ -14,24 +14,22 @@ const authRouter = require("./routes/auth");
 
 const app = express();
 
-// 🔥🔥 Configuración CORS Definitiva
+// 🔥🔥 Configuración CORS - LO MÁS TEMPRANO POSIBLE
 const allowedOrigins = [
-  "https://metasapp2025.onrender.com",
-  "http://localhost:5173"
+  "https://metasapp2025.onrender.com"
 ];
 
-// 🔥 Middleware CORS mejorado
 const corsOptions = {
-  origin: allowedOrigins, // ✅ Usa la lista de orígenes permitidos
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization',  'Origin'],
-  optionsSuccessStatus: 200 // 🔥 Necesario para algunas configuraciones
+  optionsSuccessStatus: 200
 };
 
-app.use(cors(corsOptions));   // ✅ Aplica CORS a TODAS las rutas
+app.use(cors(corsOptions));   // ✅ Aplica CORS como el primer middleware
 
-// 📁 Servir Archivos Estáticos (Fix MIME type)
+// 📁 Servir Archivos Estáticos
 app.use(express.static(path.join(__dirname, 'dist'), {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.css')) {
@@ -92,7 +90,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Rutas
+// Rutas (Orden ahora menos crítico si CORS está al principio)
 app.use("/api", cuentasRouter);
 app.use("/", indexRouter);
 app.use("/api/metas", metasRouter);
@@ -102,7 +100,6 @@ app.use("/api", authRouter);
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
-
 
 // 🚨 Manejador de Errores Mejorado
 app.use((err, req, res, next) => {

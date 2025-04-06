@@ -22,7 +22,7 @@ const allowedOrigins = [
 
 // 🔥 Middleware CORS mejorado
 const corsOptions = {
-  origin: allowedOrigins, // ✅ Usa la lista de orígenes permitidos
+  origin: ["https://metasapp2025.onrender.com", "http://localhost:5173"], // ✅ Usa la lista de orígenes permitidos
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization',  'Origin'],
@@ -62,7 +62,7 @@ app.use(
     }
   }).unless({
     path: [
-      { url: /\/api\/(signup|login)/, methods: ["POST"] }, // Rutas públicas
+      { url: /\/api\/(signup|login)/, methods: ["POST", "OPTIONS"] }, // Rutas públicas
       { url: /\.(css|js|png|jpg|ico|svg)$/ }, // Archivos estáticos
       { url: "/", methods: ["GET"] }
     ]

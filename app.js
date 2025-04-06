@@ -49,24 +49,42 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 // 🔐 Configuración JWT Actualizada
-app.use(
-  jwt({
-    secret: process.env.JWT_SECRET || "secreto",
-    algorithms: ["HS256"],
-    requestProperty: "auth",
-    getToken: (req) => {
-      return req.cookies?.token || 
-             req.headers.authorization?.split(' ')[1] || 
-             null;
-    }
-  }).unless({
-    path: [
-      { url: /\/api\/(signup|login)/, methods: ["POST", "OPTIONS"] }, // Rutas públicas
-      { url: /\.(css|js|png|jpg|ico|svg)$/ }, // Archivos estáticos
-      { url: "/", methods: ["GET"] }
-    ]
-  })
-);
+const jwtMiddleware = jwt({
+  secret: process.env.JWT_SECRET || "secreto",
+  algorithms: ["HS256"],
+  requestProperty: "auth",
+  getToken: (req) => {
+    const token = req.cookies?.token || req.headers.authorization?.split(' ')[1] || null;
+    console.log("🔑 Intentando obtener token:", token, "para la ruta:", req.path, "método:", req.method); // Log
+    return token;
+  }
+}).unless({
+  path: [
+    { url: /\/api\/(signup|login)/, methods: ["POST", "OPTIONS"] },
+    { url: /\.(css|js|png|jpg|ico|svg)$/ },
+    { url: "/", methods: ["GET"] }
+  ]
+});
+
+app.use((req, res, next) => {
+  console.log("➡️ Middleware antes de JWT para la ruta:", req.path, "método:", req.method); // Log
+  next();
+});
+
+app.use(jwtMiddleware);
+
+app.use((err, req, res, next) => {
+  console.log("❗ Error después de JWT para la ruta:", req.path, "método:", req.method, "Error:", err.message); // Log
+  if (err.name === 'UnauthorizedError') {
+    return res.status(401).json({ message: 'Token inválido o no proporcionado' });
+  }
+  next(err);
+});
+
+app.use((req, res, next) => {
+  console.log("➡️ Middleware después de JWT (si no hubo error) para la ruta:", req.path, "método:", req.method); // Log
+  next();
+});
 
 // Rutas
 app.use("/", indexRouter);

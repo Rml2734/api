@@ -15,49 +15,53 @@ const authRouter = require("./routes/auth");
 const app = express();
 
 console.log("--- Aplicación Iniciándose ---"); // Log muy temprano
-console.log("!!! APLICANDO CORS ABIERTO SIMPLE (DEBUG) !!!");
 
 // 🔥🔥 Configuración CORS - LO MÁS TEMPRANO POSIBLE
 const allowedOrigins = [
-  "https://metasapp2025.onrender.com",
-  "http://localhost:5173",
-  "https://api-lqys.onrender.com"
-  // Puedes añadir 'http://localhost:xxxx' (tu puerto de frontend dev) aquí si también quieres probar localmente sin el proxy de Vite
+  "https://metasapp2025.onrender.com", // Origen Frontend Producción
+  "http://localhost:5173"           // Origen Frontend Desarrollo (Opcional)
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Permite solicitudes sin origen (como Postman o apps móviles) O si el origen está en la lista
+    // Loguear el origen recibido para depurar
+    console.log(`CORS Check: Recibido origin = ${origin} (Tipo: ${typeof origin})`);
+    // Permite solicitudes sin origen (como Postman) O si el origen está en la lista
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
+      console.log(`CORS Check: PERMITIENDO origen = ${origin}`);
+      callback(null, true); // Permite este origen específico
     } else {
       console.error(`❌ Origen NO PERMITIDO por CORS: ${origin}`); // Log si un origen es rechazado
-      callback(new Error('Origen no permitido por CORS'));
+      callback(new Error(`Origen no permitido por CORS: ${origin}`));
     }
   },
-  credentials: true,
+  credentials: true, // IMPORTANTE: Necesario para 'credentials: "include"' en fetch
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Origin'], // Asegúrate que 'Authorization' esté si usas tokens así
-  optionsSuccessStatus: 200 // Para navegadores legacy
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin'], // Headers necesarios
+  optionsSuccessStatus: 200 // Para compatibilidad
 };
 
-console.log("Aplicando middleware CORS global..."); // Log antes de app.use(cors)
-app.use(cors());
-console.log("Middleware CORS global aplicado."); // Log después de app.use(cors)
+console.log("Aplicando middleware CORS global (configuración específica)...");
+// 👇 *** ESTE ES EL CAMBIO CLAVE: Volver a usar corsOptions *** 👇
+app.use(cors(corsOptions));
+// 👆 *** FIN DEL CAMBIO CLAVE *** 👆
+console.log("Middleware CORS global aplicado (configuración específica).");
 
 
-// 🔥🔥 NUEVO EXPERIMENTO: Manejar OPTIONS para /api/login directamente (puede ser redundante si el global funciona, pero útil para debug)
+// 👇 ** Opcional: Puedes eliminar estos manejadores OPTIONS explícitos ** 👇
+// El middleware global app.use(cors(corsOptions)) debería manejarlos ahora.
+/*
 app.options('/api/login', cors(corsOptions), (req, res) => {
-  // MANTÉN este log para ver si este manejador específico se activa
   console.log("🔥 EXPERIMENTO: Recibida solicitud OPTIONS para /api/login en app.js");
-  res.sendStatus(200); // Responde OK a la solicitud preflight
+  res.sendStatus(200);
 });
 
-// 🔥🔥 NUEVO: Ruta OPTIONS de prueba directamente en app.js (para verificar si OPTIONS llega en general)
 app.options('/api/test-cors', cors(corsOptions), (req, res) => {
   console.log("🧪 Recibida solicitud OPTIONS para /api/test-cors en app.js");
   res.sendStatus(200);
 });
+*/
+// 👆 ** Fin de sección opcional a eliminar ** 👆
 
 
 // 📁 Servir Archivos Estáticos (Si tu backend también sirve el frontend compilado, si no, puedes quitarlo)
@@ -103,8 +107,8 @@ const shouldSkipJwt = (req) => {
          (req.method === 'GET' && req.path === '/') ||
          /\.(css|js|png|jpg|ico|svg)$/.test(req.path) || // Archivos estáticos
          (req.path.startsWith('/api/signup') && (req.method === 'POST' || req.method === 'OPTIONS')) ||
-         (req.path.startsWith('/api/login') && (req.method === 'POST' || req.method === 'OPTIONS')) ||
-         (req.path.startsWith('/api/test-cors') && req.method === 'OPTIONS'); // Incluir la ruta de test
+         (req.path.startsWith('/api/login') && (req.method === 'POST' || req.method === 'OPTIONS'));
+         // (req.path.startsWith('/api/test-cors') && req.method === 'OPTIONS'); // Ya no es necesario si quitaste el handler
   // Log si se salta
   // if (skip) console.log(`⏭️ Omitiendo JWT para: ${req.method} ${req.path}`);
   return skip;

@@ -62,6 +62,7 @@ router.post(
 
 /* OPTIONS para /login */
 router.options('/login', cors(corsOptions), (req, res) => { // 🔥 Añade el manejador OPTIONS
+  console.log("🔥 Recibida solicitud OPTIONS para /login");
   res.sendStatus(200);
 });
 

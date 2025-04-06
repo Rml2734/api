@@ -29,6 +29,12 @@ const corsOptions = {
 
 app.use(cors(corsOptions));   // ✅ Aplica CORS como el primer middleware
 
+// 🔥🔥 NUEVO: Ruta OPTIONS de prueba directamente en app.js
+app.options('/api/test-cors', cors(corsOptions), (req, res) => {
+  console.log("🧪 Recibida solicitud OPTIONS para /api/test-cors en app.js");
+  res.sendStatus(200);
+});
+
 // 📁 Servir Archivos Estáticos
 app.use(express.static(path.join(__dirname, 'dist'), {
   setHeaders: (res, filePath) => {
@@ -90,7 +96,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Rutas (Orden ahora menos crítico si CORS está al principio)
+// Rutas
 app.use("/api", cuentasRouter);
 app.use("/", indexRouter);
 app.use("/api/metas", metasRouter);

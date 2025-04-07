@@ -65,15 +65,15 @@ app.options('/api/test-cors', cors(corsOptions), (req, res) => {
 
 
 // 📁 Servir Archivos Estáticos (Si tu backend también sirve el frontend compilado, si no, puedes quitarlo)
-app.use(express.static(path.join(__dirname, 'dist'), {
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css');
-        } else if (filePath.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript');
-        }
-    }
-}));
+//app.use(express.static(path.join(__dirname, 'dist'), {
+//    setHeaders: (res, filePath) => {
+//        if (filePath.endsWith('.css')) {
+//            res.setHeader('Content-Type', 'text/css');
+//        } else if (filePath.endsWith('.js')) {
+//            res.setHeader('Content-Type', 'application/javascript');
+//        }
+//    }
+//}));
 
 
 // Middlewares estándar (después de CORS)

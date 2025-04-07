@@ -1,11 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db/configuracion"); // Asegúrate de que la conexión a la BD esté bien configurada
+const db = require("../db/configuracion"); // Asegúrate de que la conexión a la BD esté bien configurada
 const nodemailer = require("nodemailer");
 const jwt = require('jsonwebtoken'); // Importamos jwt para manejar la autenticación
-const db = require("../db/configuracion");
-
-
 
 // Ruta para solicitar recuperación de contraseña
 router.post("/recuperar-clave", async (req, res) => {
@@ -13,8 +10,10 @@ router.post("/recuperar-clave", async (req, res) => {
 
     try {
         // Verificar si el usuario existe
+        console.log("Ejecutando consulta:", "SELECT * FROM cuentas WHERE usuario = $1", [email]);
         const resultado = await db.query("SELECT * FROM cuentas WHERE usuario = $1", [email]);
-        
+        console.log("Resultado de la consulta:", resultado); // Agrega esta línea
+
         if (resultado.rows.length === 0) {
             return res.status(400).json({ error: "No existe un usuario con ese correo." });
         }
@@ -51,13 +50,12 @@ router.post("/recuperar-clave", async (req, res) => {
 router.post("/refresh-token", (req, res) => {
     const { refreshToken } = req.body;
     if (!refreshToken) return res.status(403).json({ error: "Refresh token requerido" });
-  
+
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
-      if (err) return res.sendStatus(403);
-      const newToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-      res.json({ token: newToken });
+        if (err) return res.sendStatus(403);
+        const newToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.json({ token: newToken });
     });
-  });
-  
+});
 
 module.exports = router;

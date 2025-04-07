@@ -53,16 +53,16 @@ function crear(tabla, item, callback) {
 
 function actualizar(tabla, id, item, callback) {
   const keys = Object.keys(item);
-  const actualizaciones = keys.map(key => `${key} = '${item[key]}'`).join(', ');
-
-  const sql  = `UPDATE ${tabla} SET ${actualizaciones} WHERE id = ${id} returning *`;
-  db.any(sql)
-    .then(([resultado]) => {
-      callback(null, resultado);
-    })
-    .catch(error => {
-      callback(error);
-    });
+  const actualizaciones = keys.map((key, index) => `${key} = $${index + 1}`).join(', ');
+  const values = Object.values(item);
+  const sql = `UPDATE ${tabla} SET ${actualizaciones} WHERE id = $${keys.length + 1} returning *`;
+  db.any(sql, [...values, id])
+      .then(([resultado]) => {
+          callback(null, resultado);
+      })
+      .catch(error => {
+          callback(error);
+      });
 }
 
 function borrar(tabla, id, callback) {

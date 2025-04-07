@@ -25,12 +25,18 @@ function pedir(tabla, id, callback) {
     });
 }
 
-function pedirCuenta(usuario, callback) {
-  // 🔥 Usar parámetros seguros ($1) para evitar SQL injection y errores
-  db.any("SELECT * FROM cuentas WHERE usuario = $1", [usuario])
-    .then(resultado => callback(null, resultado))
-    .catch(error => callback(error));
-}
+const pedirCuenta = (usuario, callback) => {
+  console.log("pedirCuenta llamado para:", usuario);
+  db.any('SELECT * FROM cuentas WHERE usuario = $1', usuario)
+      .then(data => {
+          console.log("pedirCuenta resultado:", data);
+          callback(null, data);
+      })
+      .catch(err => {
+          console.error("pedirCuenta error:", err);
+          callback(err, null);
+      });
+};
 
 // En la función crear (pedidos.js)
 function crear(tabla, item, callback) {

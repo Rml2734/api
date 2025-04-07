@@ -3,6 +3,13 @@ require('dotenv').config();
 const initOptions = {};
 const pgp = require('pg-promise')(initOptions);
 
+console.log("Configurando conexión a la base de datos...");
+console.log("PGHOST:", process.env.PGHOST);
+console.log("PGPORT:", process.env.PGPORT);
+console.log("POSTGRES_USER:", process.env.POSTGRES_USER);
+console.log("POSTGRES_PASSWORD:", process.env.POSTGRES_PASSWORD);
+console.log("POSTGRES_DB:", process.env.POSTGRES_DB);
+
 const cn = {
     host: process.env.PGHOST,
     port: process.env.PGPORT,

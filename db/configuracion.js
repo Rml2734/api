@@ -10,12 +10,12 @@ console.log("URL de conexión:", cn); // Imprimir la URL de conexión
 
 const db = pgp(cn);
 
-module.exports = db;
+module.exports = db;  
 
 
 //CONFIGURACION PARA DESARROLLO
-
- /*require('dotenv').config();
+/*
+require('dotenv').config();
 
 const initOptions = {};
 const pgp = require('pg-promise')(initOptions);

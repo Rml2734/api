@@ -195,10 +195,10 @@ app.use((err, req, res, next) => {
 });
 
 // 🚀 Iniciar Servidor
-// const PORT = process.env.PORT || 10000;
-// app.listen(PORT, () => {
-//     console.log(`✅ Servidor escuchando en puerto ${PORT}`);
-//     console.log(` Modo de entorno: ${process.env.NODE_ENV || 'development'}`); // Muestra el modo
-// });
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => {
+console.log(`✅ Servidor escuchando en puerto ${PORT}`);
+ console.log(` Modo de entorno: ${process.env.NODE_ENV || 'development'}`); // Muestra el modo
+});
 
 module.exports = app; // Exporta app (útil para tests)

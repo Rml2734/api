@@ -4,7 +4,9 @@ const pgp = require('pg-promise')();
 
 console.log("Configurando conexión a la base de datos...");
 
-const cn = process.env.DATABASE_URL; // Usar DATABASE_URL proporcionada por Railway
+const cn = process.env.DATABASE_URL;
+
+console.log("URL de conexión:", cn); // Imprimir la URL de conexión
 
 const db = pgp(cn);
 

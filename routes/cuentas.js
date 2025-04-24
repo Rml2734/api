@@ -139,7 +139,7 @@ router.post(
 
 // Ruta DELETE /api/usuarios/:id para eliminar usuario autenticado
 router.delete('/usuarios/:id', autenticar, async (req, res, next) => {
-    if (!req.usuario || req.usuario.id !== parseInt(req.params.id, 10)) { // Asegúrate que req.usuario existe
+    if (!req.usuario || req.usuario.id !== parseInt(req.params.id, 10)) {
         const userId = req.usuario ? req.usuario.id : 'desconocido';
         console.warn(`Intento no autorizado de borrar usuario ${req.params.id} por usuario ${userId}`);
         return res.status(403).json({ error: "No tienes permiso para borrar este usuario" });
@@ -147,15 +147,20 @@ router.delete('/usuarios/:id', autenticar, async (req, res, next) => {
     try {
         const usuarioId = parseInt(req.params.id, 10);
         if (isNaN(usuarioId)) { return res.status(400).json({ error: "ID de usuario inválido" }); }
-        console.log(`🗑️ Intentando eliminar usuario y sus metas con ID: ${usuarioId}`);
-        console.log(`   Borrando metas para cuenta_id: ${usuarioId}...`);
-        await new Promise((resolve, reject) => {
-            borrar("metas", { cuenta_id: usuarioId }, (err, result) => { if (err) return reject(err); console.log(`   Resultado borrado metas:`, result); resolve(); });
-        });
-        console.log(`   Borrando cuenta con id: ${usuarioId}...`);
-        await new Promise((resolve, reject) => {
-            borrar("cuentas", { id: usuarioId }, (err, result) => { if (err) return reject(err); console.log(`   Resultado borrado cuenta:`, result); resolve(); });
-        });
+        console.log(`️ Intentando eliminar usuario y sus metas con ID: ${usuarioId}`);
+        console.log(`  Borrando metas para cuenta_id: ${usuarioId}...`);
+
+        // Importa configuracion.js en lugar de conexion.js
+        const db = require('../db/configuracion');
+
+        // Eliminar metas usando el nombre de columna correcto 'cuenta_id'
+        await db.none('DELETE FROM metas WHERE cuenta_id = $1', [usuarioId]);
+
+        console.log(`  Borrando cuenta con id: ${usuarioId}...`);
+
+        // Eliminar la cuenta
+        await db.none('DELETE FROM cuentas WHERE id = $1', [usuarioId]);
+
         console.log(`✅ Usuario y metas eliminados para ID: ${usuarioId}`);
         res.status(204).end();
     } catch (error) {
@@ -163,6 +168,8 @@ router.delete('/usuarios/:id', autenticar, async (req, res, next) => {
         next(error);
     }
 });
+
+
 
 
 // Función para crear el token JWT

@@ -6,6 +6,10 @@ const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 const { expressjwt: jwt } = require("express-jwt");
 
+// Importar Swagger UI y configuración
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./swagger"); // Importa la configuración de Swagger
+
 // Routers
 const indexRouter = require("./routes/index");
 const metasRouter = require("./routes/metas");
@@ -117,7 +121,7 @@ const shouldSkipJwt = (req) => {
 // Middleware condicional para aplicar JWT
 app.use((req, res, next) => {
     console.log("➡️ Middleware ANTES de JWT para:", req.method, req.path);
-    if (shouldSkipJwt(req)) {
+    if (req.path === '/api-docs' || shouldSkipJwt(req)) {
         console.log("⏭️ Omitiendo verificación JWT para:", req.method, req.path);
         return next(); // Salta la verificación
     }

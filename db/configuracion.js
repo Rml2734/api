@@ -1,6 +1,6 @@
 //CONFIGURACION PARA PRODUCCCION
 
-/*const pgp = require('pg-promise')();
+const pgp = require('pg-promise')();
 
 console.log("Configurando conexión a la base de datos...");
 
@@ -10,11 +10,11 @@ console.log("URL de conexión:", cn); // Imprimir la URL de conexión
 
 const db = pgp(cn);
 
-module.exports = db;  */
+module.exports = db;  
 
 
 //CONFIGURACION PARA DESARROLLO
-
+/*
 require('dotenv').config();
 
 const initOptions = {};
@@ -30,4 +30,4 @@ const cn = {
 
 const db = pgp(cn);
 
-module.exports = db;  
+module.exports = db;  */

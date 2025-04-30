@@ -23,7 +23,7 @@ console.log("--- Aplicación Iniciándose ---"); // Log muy temprano
 // 🔥🔥 Configuración CORS - LO MÁS TEMPRANO POSIBLE
 const allowedOrigins = [
     "https://metasapp2025-production.up.railway.app", // Origen Frontend Producción
-    "http://localhost:5173"           // Origen Frontend Desarrollo (Opcional)
+    "http://localhost:5173"              // Origen Frontend Desarrollo (Opcional)
 ];
 
 const corsOptions = {
@@ -70,13 +70,13 @@ app.options('/api/test-cors', cors(corsOptions), (req, res) => {
 
 // 📁 Servir Archivos Estáticos (Si tu backend también sirve el frontend compilado, si no, puedes quitarlo)
 //app.use(express.static(path.join(__dirname, 'dist'), {
-//    setHeaders: (res, filePath) => {
-//        if (filePath.endsWith('.css')) {
-//            res.setHeader('Content-Type', 'text/css');
-//        } else if (filePath.endsWith('.js')) {
-//            res.setHeader('Content-Type', 'application/javascript');
-//        }
-//    }
+//     setHeaders: (res, filePath) => {
+//         if (filePath.endsWith('.css')) {
+//             res.setHeader('Content-Type', 'text/css');
+//         } else if (filePath.endsWith('.js')) {
+//             res.setHeader('Content-Type', 'application/javascript');
+//         }
+//     }
 //}));
 
 
@@ -108,11 +108,11 @@ const jwtMiddleware = jwt({
 // Función para determinar si saltar la verificación JWT
 const shouldSkipJwt = (req) => {
     const skip = (req.method === 'HEAD' && req.path === '/') ||
-                 (req.method === 'GET' && req.path === '/') ||
-                 /\.(css|js|png|jpg|ico|svg)$/.test(req.path) || // Archivos estáticos
-                 (req.path.startsWith('/api/signup') && (req.method === 'POST' || req.method === 'OPTIONS')) ||
-                 (req.path.startsWith('/api/login') && (req.method === 'POST' || req.method === 'OPTIONS')) ||
-                 (req.path.startsWith('/api/recuperar-clave') && req.method === 'POST'); // 👈 **AÑADIDA ESTA LÍNEA**
+        (req.method === 'GET' && req.path === '/') ||
+        /\.(css|js|png|jpg|ico|svg)$/.test(req.path) || // Archivos estáticos
+        (req.path.startsWith('/api/signup') && (req.method === 'POST' || req.method === 'OPTIONS')) ||
+        (req.path.startsWith('/api/login') && (req.method === 'POST' || req.method === 'OPTIONS')) ||
+        (req.path.startsWith('/api/recuperar-clave') && req.method === 'POST'); // 👈 **AÑADIDA ESTA LÍNEA**
     // Log si se salta
     // if (skip) console.log(`⏭️ Omitiendo JWT para: ${req.method} ${req.path}`);
     return skip;
@@ -151,11 +151,12 @@ app.use("/api", cuentasRouter);
 app.use("/", indexRouter); // Usar indexRouter para la raíz '/'
 app.use("/api/metas", metasRouter);
 app.use("/api", authRouter); // Aquí estarán /api/login y /api/signup
-
+console.log("app.js - Antes de app.get(*)"); // NUEVO LOG
 
 // Sirve index.html para cualquier ruta GET no manejada por la API (si sirves el frontend desde aquí)
 // Asegúrate que esto vaya DESPUÉS de todas las rutas API
 app.get('*', (req, res, next) => {
+    console.log("app.js - Dentro de app.get(*), req.path:", req.path); // NUEVO LOG
     // Solo intercepta peticiones GET que acepten HTML, para no interferir con API calls que no coincidan
     if (req.method === 'GET' && req.accepts('html') && !req.path.startsWith('/api/')) {
         console.log(` Mapeando ruta ${req.path} a index.html`);
@@ -167,7 +168,7 @@ app.get('*', (req, res, next) => {
 
 
 // Manejador para errores 404 (Not Found) - Debe ir casi al final
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     console.warn(`⚠️ Recurso no encontrado (404): ${req.method} ${req.originalUrl}`);
     next(createError(404));
 });
@@ -197,12 +198,13 @@ app.use((err, req, res, next) => {
         res.status(err.status || 500).send(`Error: ${err.message}`);
     }
 });
-
+console.log("app.js - Antes de app.listen()"); // NUEVO LOG
 // 🚀 Iniciar Servidor
 const PORT = process.env.PORT || 10000;
+console.log("app.js - Valor de PORT:", PORT);  // NUEVO LOG
 app.listen(PORT, () => {
-console.log(`✅ Servidor escuchando en puerto ${PORT}`);
- console.log(` Modo de entorno: ${process.env.NODE_ENV || 'development'}`); // Muestra el modo
+    console.log(`✅ Servidor escuchando en puerto ${PORT}`);
+    console.log(` Modo de entorno: ${process.env.NODE_ENV || 'development'}`); // Muestra el modo
 });
 
 module.exports = app; // Exporta app (útil para tests)

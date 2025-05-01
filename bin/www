@@ -11,8 +11,8 @@ var http = require('http');
 /**
  * Get port from environment and store in Express.
  */
-// 👇 Eliminar el valor por defecto '10000'
-var port = normalizePort(process.env.PORT);
+
+var port = normalizePort(process.env.PORT || '8080'); 
 app.set('port', port);
 
 /**
@@ -24,7 +24,8 @@ var server = http.createServer(app);
 /**
  * Listen on provided port, on all network interfaces.
  */
-console.log("www - Antes de server.listen, port:", port);
+console.log("www - Antes de server.listen, port:", port);  // NUEVO LOG
+console.log("www - Iniciando servidor en puerto:", port); // Agrega esta línea
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
@@ -52,7 +53,7 @@ function normalizePort(val) {
  * Event listener for HTTP server "error" event.
  */
 function onError(error) {
-  console.error("www - onError - port:", port);
+  console.error("www - onError - port:", port); // NUEVO LOG
   if (error.syscall !== 'listen') {
     throw error;
   }
@@ -85,5 +86,5 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
-  console.log("www - onListening - Listening on " + bind);
+  console.log("www - onListening - Listening on " + bind); // NUEVO LOG
 }

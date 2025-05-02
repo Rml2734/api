@@ -22,7 +22,7 @@ console.log("--- Aplicación Iniciándose ---"); // Log muy temprano
 
 // 🔥🔥 Configuración CORS - LO MÁS TEMPRANO POSIBLE
 const allowedOrigins = [
-    "https://metasapp2025-production.up.railway.app/login", // Origen Frontend Producción
+    "https://metasapp2025-production.up.railway.app", // Origen Frontend Producción
     "http://localhost:5173"              // Origen Frontend Desarrollo (Opcional)
 ];
 

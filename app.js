@@ -217,11 +217,11 @@ app.use((err, req, res, next) => {
 console.log("app.js - Antes de app.listen()"); // NUEVO LOG
 
 // 🚀 INICIAR SERVIDOR LOCAL
-const PORT = process.env.PORT || 10000;
-console.log("app.js - Valor de PORT:", PORT);  // NUEVO LOG
-app.listen(PORT, () => {
-    console.log(`✅ Servidor escuchando en puerto ${PORT}`);
-    console.log(` Modo de entorno: ${process.env.NODE_ENV || 'development'}`); // Muestra el modo
-});
+//const PORT = process.env.PORT || 10000;
+//console.log("app.js - Valor de PORT:", PORT);  // NUEVO LOG
+//app.listen(PORT, () => {
+    //console.log(`✅ Servidor escuchando en puerto ${PORT}`);
+    //console.log(` Modo de entorno: ${process.env.NODE_ENV || 'development'}`); // Muestra el modo
+//});
 
 module.exports = app; // Exporta app (útil para tests)

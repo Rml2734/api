@@ -22,32 +22,44 @@ console.log("--- Aplicación Iniciándose ---"); // Log muy temprano
 
 // 🔥🔥 Configuración CORS - LO MÁS TEMPRANO POSIBLE
 const allowedOrigins = [
-    "https://metasapp2025-production.up.railway.app", // Origen Frontend Producción
-    "http://localhost:5173"              // Origen Frontend Desarrollo (Opcional)
+    "https://metasapp2025-production.up.railway.app",
+    "http://localhost:5173"
 ];
 
 const corsOptions = {
     origin: function (origin, callback) {
-        // Loguear el origen recibido para depurar
-        console.log(`CORS Check: Recibido origin = ${origin} (Tipo: ${typeof origin})`);
-        // Permite solicitudes sin origen (como Postman) O si el origen está en la lista
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-            console.log(`CORS Check: PERMITIENDO origen = ${origin}`);
-            callback(null, true); // Permite este origen específico
+        console.log(`\n=== CORS Check ===`);
+        console.log(`Origen recibido: ${origin}`);
+        console.log(`Lista permitida:`, allowedOrigins);
+        
+        // Permite solicitudes sin 'origin' (como herramientas como Postman)
+        if (!origin) {
+            console.log("✅ Origen vacío permitido (solicitud no CORS)");
+            return callback(null, true);
+        }
+
+        // Verifica contra la lista de orígenes permitidos
+        const originIsAllowed = allowedOrigins.some(allowedOrigin => {
+            return origin === allowedOrigin;
+        });
+
+        if (originIsAllowed) {
+            console.log(`✅ Origen permitido: ${origin}`);
+            callback(null, true);
         } else {
-            console.error(`❌ Origen NO PERMITIDO por CORS: ${origin}`); // Log si un origen es rechazado
+            console.log(`❌ Origen bloqueado: ${origin}`);
             callback(new Error(`Origen no permitido por CORS: ${origin}`));
         }
     },
-    credentials: true, // IMPORTANTE: Necesario para 'credentials: "include"' en fetch
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Origin'], // Headers necesarios
-    optionsSuccessStatus: 200 // Para compatibilidad
+    allowedHeaders: ['Content-Type', 'Authorization', 'Origin'],
+    optionsSuccessStatus: 200
 };
 
-console.log("Aplicando middleware CORS global (configuración específica)...");
-// 👇 *** ESTE ES EL CAMBIO CLAVE: Volver a usar corsOptions *** 👇
+console.log("\n🛡️ Aplicando middleware CORS global");
 app.use(cors(corsOptions));
+
 // 👆 *** FIN DEL CAMBIO CLAVE *** 👆
 console.log("Middleware CORS global aplicado (configuración específica).");
 
@@ -224,4 +236,6 @@ console.log("app.js - Antes de app.listen()"); // NUEVO LOG
     //console.log(` Modo de entorno: ${process.env.NODE_ENV || 'development'}`); // Muestra el modo
 //});
 
-module.exports = app; // Exporta app (útil para tests)
+// 🔄 Exportaciones combinadas
+app.corsOptions = corsOptions;  // 👈 Adjunta corsOptions al objeto app
+module.exports = app;           // 👈 Exporta app con la nueva propiedad

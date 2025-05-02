@@ -4,11 +4,24 @@ var express = require("express");
 var bcrypt = require("bcrypt");
 var jwt = require('jsonwebtoken');
 var createError = require("http-errors"); // Asegúrate de tener esta línea si la usas (ej. en crearFicha)
+var cors = require("cors"); // 🆕 Nuevo requerimiento de CORS
 
 var router = express.Router();
 // Asegúrate que las funciones importadas hagan lo que esperas
 const { pedirCuenta, crear, borrar } = require("../db/pedidos");
 const { body, validationResult } = require("express-validator");
+
+// 🆕 Importar configuración CORS del app.js
+const app = require("../app");  // Importa la app principal
+const corsOptions = app.corsOptions;  // Accede a la configuración
+
+// 🆕 1. Manejar solicitudes OPTIONS para login
+router.options("/login", cors(corsOptions), (req, res) => {
+    console.log("🔥🔥🔥 MANEJANDO OPTIONS PARA /login");
+    res.header("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Origin");
+    res.status(200).end();
+});
 
 // Middleware de autenticación (para otras rutas)
 const autenticar = (req, res, next) => {
@@ -60,6 +73,7 @@ router.post(
 /* POST Login (Lógica Completa Restaurada + Manejo Mejorado de pedirCuenta) */
 router.post(
     "/login",
+    cors(corsOptions), // 🆕 Aplicar CORS específicamente aquí
     body("usuario").isEmail(),
     body("clave").isLength({ min: 5 }),
     async function (req, res, next) {

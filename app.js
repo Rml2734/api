@@ -18,12 +18,14 @@ const authRouter = require("./routes/auth");
 
 const app = express();
 
-console.log("--- Aplicación Iniciándose ---"); // Log muy temprano
+console.log("--- Aplicación Iniciándose ---");
 
 // 🔥🔥 Configuración CORS - LO MÁS TEMPRANO POSIBLE
 const allowedOrigins = [
     "https://metasapp2025-production.up.railway.app", // Origen Frontend Producción
-    "http://localhost:5173"              // Origen Frontend Desarrollo (Opcional)
+    "http://localhost:5173",                       // Origen Frontend Desarrollo
+    // Agrega aquí cualquier otro origen permitido, incluyendo el de Swagger si es necesario
+    "https://api-production-bf05.up.railway.app"  // <- Añade esto si Swagger está en el mismo dominio
 ];
 
 const corsOptions = {
@@ -31,75 +33,54 @@ const corsOptions = {
         // Loguear el origen recibido para depurar
         console.log(`CORS Check: Recibido origin = ${origin} (Tipo: ${typeof origin})`);
         // Permite solicitudes sin origen (como Postman) O si el origen está en la lista
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        if (!origin || allowedOrigins.includes(origin)) { // Usar includes() para mejor legibilidad
             console.log(`CORS Check: PERMITIENDO origen = ${origin}`);
-            callback(null, true); // Permite este origen específico
+            callback(null, true); // Permite este origen
         } else {
-            console.error(`❌ Origen NO PERMITIDO por CORS: ${origin}`); // Log si un origen es rechazado
+            console.error(`❌ Origen NO PERMITIDO por CORS: ${origin}`);
             callback(new Error(`Origen no permitido por CORS: ${origin}`));
         }
     },
-    credentials: true, // IMPORTANTE: Necesario para 'credentials: "include"' en fetch
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Origin'], // Headers necesarios
-    optionsSuccessStatus: 200 // Para compatibilidad
+    credentials: true, // Necesario para 'credentials: "include"' en fetch y cookies
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Especifica los métodos permitidos
+    allowedHeaders: 'Content-Type,Authorization,Origin,X-Requested-With,Accept', // Amplía los headers permitidos
+    exposedHeaders: 'Set-Cookie', // Si necesitas que el navegador acceda a Set-Cookie
+    preflightContinue: false, //  <--  Añade esto
+    optionsSuccessStatus: 204  // <-- Y esto:  Respuesta para OPTIONS sin cuerpo (204 No Content)
 };
 
 console.log("Aplicando middleware CORS global (configuración específica)...");
-// 👇 *** ESTE ES EL CAMBIO CLAVE: Volver a usar corsOptions *** 👇
 app.use(cors(corsOptions));
-// 👆 *** FIN DEL CAMBIO CLAVE *** 👆
 console.log("Middleware CORS global aplicado (configuración específica).");
 
 
-// 👇 ** Opcional: Puedes eliminar estos manejadores OPTIONS explícitos ** 👇
-// El middleware global app.use(cors(corsOptions)) debería manejarlos ahora.
-/*
-app.options('/api/login', cors(corsOptions), (req, res) => {
-    console.log("🔥 EXPERIMENTO: Recibida solicitud OPTIONS para /api/login en app.js");
-    res.sendStatus(200);
-});
-
-app.options('/api/test-cors', cors(corsOptions), (req, res) => {
-    console.log("🧪 Recibida solicitud OPTIONS para /api/test-cors en app.js");
-    res.sendStatus(200);
-});
-*/
-// 👆 ** Fin de sección opcional a eliminar ** 👆
-
-
-// 📁 Servir Archivos Estáticos (Si tu backend también sirve el frontend compilado, si no, puedes quitarlo)
-//app.use(express.static(path.join(__dirname, 'dist'), {
-//     setHeaders: (res, filePath) => {
-//         if (filePath.endsWith('.css')) {
-//             res.setHeader('Content-Type', 'text/css');
-//         } else if (filePath.endsWith('.js')) {
-//             res.setHeader('Content-Type', 'application/javascript');
-//         }
-//     }
-//}));
-
-
 // Middlewares estándar (después de CORS)
-app.use(logger("dev")); // Morgan logger
-app.use(express.json()); // Para parsear application/json
-app.use(express.urlencoded({ extended: false })); // Para parsear application/x-www-form-urlencoded
-app.use(cookieParser()); // Para parsear cookies
+app.use(logger("dev"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 
 // 🔐 Configuración JWT con Middleware Condicional (después de CORS y parsers)
 const jwtMiddleware = jwt({
-    secret: process.env.JWT_SECRET || "secreto", // Usa una variable de entorno segura!
+    secret: process.env.JWT_SECRET || "secreto",
     algorithms: ["HS256"],
-    requestProperty: "auth", // Nombre de la propiedad en req donde se guarda el payload decodificado
+    requestProperty: "auth",
     getToken: (req) => {
-        // Extrae token de cookies o cabecera Authorization
-        const token = req.cookies?.token || req.headers.authorization?.split(' ')[1] || null;
-        // Log reducido para no llenar tanto, solo si se encontró o no
+        // Extrae token de cookies o cabecera Authorization (más robusto)
+        let token = null;
+        if (req && req.cookies) {
+            token = req.cookies.token;
+        } else if (req && req.headers.authorization) {
+            const authHeader = req.headers.authorization;
+            const parts = authHeader.split(' ');
+            if (parts.length === 2 && parts[0] === 'Bearer') { // Mejorar validación del esquema
+                token = parts[1];
+            }
+        }
+        // Log reducido
         if (token) {
-            console.log("🔑 Token encontrado para:", req.path, req.method);
-        } else {
-            // console.log("🔑 No se encontró token para:", req.path, req.method); // Descomenta si necesitas más detalle
+            console.log("🔑 Token encontrado para:", req.method, req.path);
         }
         return token;
     }
@@ -109,12 +90,10 @@ const jwtMiddleware = jwt({
 const shouldSkipJwt = (req) => {
     const skip = (req.method === 'HEAD' && req.path === '/') ||
         (req.method === 'GET' && req.path === '/') ||
-        /\.(css|js|png|jpg|ico|svg)$/.test(req.path) || // Archivos estáticos
-        (req.path.startsWith('/api/signup') && (req.method === 'POST' || req.method === 'OPTIONS')) ||
-        (req.path.startsWith('/api/login') && (req.method === 'POST' || req.method === 'OPTIONS')) ||
-        (req.path.startsWith('/api/recuperar-clave') && req.method === 'POST'); // 👈 **AÑADIDA ESTA LÍNEA**
-    // Log si se salta
-    // if (skip) console.log(`⏭️ Omitiendo JWT para: ${req.method} ${req.path}`);
+        /\.(css|js|png|jpg|ico|svg)$/.test(req.path) ||
+        (req.path.startsWith('/api/signup') && (req.method === 'POST' || req.method === 'OPTIONS')) || // Incluir OPTIONS
+        (req.path.startsWith('/api/login') && (req.method === 'POST' || req.method === 'OPTIONS')) ||  // Incluir OPTIONS
+        (req.path.startsWith('/api/recuperar-clave') && req.method === 'POST');
     return skip;
 };
 
@@ -123,88 +102,71 @@ app.use((req, res, next) => {
     console.log("➡️ Middleware ANTES de JWT para:", req.method, req.path);
     if (req.path === '/api-docs' || shouldSkipJwt(req)) {
         console.log("⏭️ Omitiendo verificación JWT para:", req.method, req.path);
-        return next(); // Salta la verificación
+        return next();
     }
     console.log("🛡️ Aplicando verificación JWT para:", req.method, req.path);
-    jwtMiddleware(req, res, next); // Aplica la verificación
+    jwtMiddleware(req, res, next);
 });
 
-// Middleware para manejar errores específicos de JWT (después de aplicarlo)
+// Middleware para manejar errores específicos de JWT
 app.use((err, req, res, next) => {
     if (err.name === 'UnauthorizedError') {
         console.error("❗ Error de Autenticación (JWT):", err.message, "para:", req.method, req.path);
         return res.status(401).json({ message: 'Token inválido, expirado o no proporcionado' });
     }
-    // Si no es un error de JWT, pasa al siguiente manejador de errores
     next(err);
 });
 
-// Middleware simple para loguear después de pasar JWT (si no hubo error)
+// Middleware simple para loguear después de pasar JWT
 app.use((req, res, next) => {
-    console.log("➡️ Middleware DESPUÉS de JWT (si pasó) para:", req.method, req.path);
+    console.log("➡️ Middleware DESPUÉS de JWT para:", req.method, req.path);
     next();
 });
 
 
-// Rutas de la API (después de todos los middlewares generales)
+// Rutas de la API
 app.use("/api", cuentasRouter);
-app.use("/", indexRouter); // Usar indexRouter para la raíz '/'
+app.use("/", indexRouter);
 app.use("/api/metas", metasRouter);
-app.use("/api", authRouter); // Aquí estarán /api/login y /api/signup
-console.log("app.js - Antes de app.get(*)"); // NUEVO LOG
+app.use("/api", authRouter);
+console.log("app.js - Antes de app.get(*)");
 
-// Sirve index.html para cualquier ruta GET no manejada por la API (si sirves el frontend desde aquí)
-// Asegúrate que esto vaya DESPUÉS de todas las rutas API
+// Manejo de rutas no manejadas (SPA catch-all)
 app.get('*', (req, res, next) => {
-    console.log("app.js - Dentro de app.get(*), req.path:", req.path); // NUEVO LOG
-    // Solo intercepta peticiones GET que acepten HTML, para no interferir con API calls que no coincidan
+    console.log("app.js - Dentro de app.get(*), req.path:", req.path);
     if (req.method === 'GET' && req.accepts('html') && !req.path.startsWith('/api/')) {
         console.log(` Mapeando ruta ${req.path} a index.html`);
         res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
     } else {
-        next(); // Pasa a los siguientes manejadores (como el 404)
+        next();
     }
 });
 
 
-// Manejador para errores 404 (Not Found) - Debe ir casi al final
+// Manejador para errores 404
 app.use(function (req, res, next) {
     console.warn(`⚠️ Recurso no encontrado (404): ${req.method} ${req.originalUrl}`);
     next(createError(404));
 });
 
-// 🚨 Manejador de Errores Global (Debe ser el ÚLTIMO middleware)
+// 🚨 Manejador de Errores Global
 app.use((err, req, res, next) => {
     console.error("🔥 Error Global Capturado:", err.message);
-    console.error("Stack:", err.stack); // Loguea el stack completo para depuración
+    console.error(" Stack:", err.stack);
 
-    // Establece locals, solo proporciona error en desarrollo
     res.locals.message = err.message;
-    res.locals.error = req.app.get('env') === 'development' ? err : {}; // No exponer stack en producción
+    res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-    // Responde con JSON si la solicitud esperaba JSON, de lo contrario renderiza una página de error (si tienes una)
     if (req.accepts('json')) {
         res.status(err.status || 500).json({
             error: {
                 message: err.message || "Error interno del servidor",
-                // Puedes añadir más detalles si es seguro hacerlo
             }
         });
     } else {
-        // Renderiza la página de error (si tienes una vista 'error')
-        // res.status(err.status || 500);
-        // res.render('error');
-        // O una respuesta de texto simple:
         res.status(err.status || 500).send(`Error: ${err.message}`);
     }
 });
-console.log("app.js - Antes de app.listen()"); // NUEVO LOG
-// 🚀 INICIAR SERVIDOR LOCAL
-//const PORT = process.env.PORT || 10000;
-//console.log("app.js - Valor de PORT:", PORT);  // NUEVO LOG
-//app.listen(PORT, () => {
-    //console.log(`✅ Servidor escuchando en puerto ${PORT}`);
-    //console.log(` Modo de entorno: ${process.env.NODE_ENV || 'development'}`); // Muestra el modo
-//});
+console.log("app.js - Antes de app.listen()");
 
-module.exports = app; // Exporta app (útil para tests)
+module.exports = app;

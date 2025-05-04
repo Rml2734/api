@@ -1,3 +1,4 @@
+const { corsOptions } = require("./config/cors"); // 👈 Nueva importación
 const cors = require("cors");
 const createError = require("http-errors");
 const express = require("express");
@@ -21,42 +22,43 @@ const app = express();
 console.log("--- Aplicación Iniciándose ---"); // Log muy temprano
 
 // 🔥🔥 Configuración CORS - LO MÁS TEMPRANO POSIBLE
-const allowedOrigins = [
-    "https://metasapp2025-production.up.railway.app",
-    "http://localhost:5173"
-];
+//const allowedOrigins = [
+    //"https://metasapp2025-production.up.railway.app",
+    //"http://localhost:5173"
+//];
 
-const corsOptions = {
-    origin: function (origin, callback) {
-        console.log(`\n=== CORS Check ===`);
-        console.log(`Origen recibido: ${origin}`);
-        console.log(`Lista permitida:`, allowedOrigins);
+//const corsOptions = {
+    //origin: function (origin, callback) {
+        //console.log(`\n=== CORS Check ===`);
+        //console.log(`Origen recibido: ${origin}`);
+        //console.log(`Lista permitida:`, allowedOrigins);
         
         // Permite solicitudes sin 'origin' (como herramientas como Postman)
-        if (!origin) {
-            console.log("✅ Origen vacío permitido (solicitud no CORS)");
-            return callback(null, true);
-        }
+        //if (!origin) {
+            //console.log("✅ Origen vacío permitido (solicitud no CORS)");
+            //return callback(null, true);
+        //}
 
         // Verifica contra la lista de orígenes permitidos
-        const originIsAllowed = allowedOrigins.some(allowedOrigin => {
-            return origin === allowedOrigin;
-        });
+        //const originIsAllowed = allowedOrigins.some(allowedOrigin => {
+            //return origin === allowedOrigin;
+        //});
 
-        if (originIsAllowed) {
-            console.log(`✅ Origen permitido: ${origin}`);
-            callback(null, true);
-        } else {
-            console.log(`❌ Origen bloqueado: ${origin}`);
-            callback(new Error(`Origen no permitido por CORS: ${origin}`));
-        }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Origin'],
-    optionsSuccessStatus: 200
-};
+        //if (originIsAllowed) {
+            //console.log(`✅ Origen permitido: ${origin}`);
+            //callback(null, true);
+        //} else {
+            //console.log(`❌ Origen bloqueado: ${origin}`);
+            //callback(new Error(`Origen no permitido por CORS: ${origin}`));
+        //}
+    //},
+    //credentials: true,
+    //methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    //allowedHeaders: ['Content-Type', 'Authorization', 'Origin'],
+    //optionsSuccessStatus: 200
+//};
 
+// 🛡️🔥 Aplicar CORS LO MÁS TEMPRANO POSIBLE
 console.log("\n🛡️ Aplicando middleware CORS global");
 app.use(cors(corsOptions));
 
@@ -169,7 +171,7 @@ app.options('/api/test-cors', (req, res) => {
     console.log('Recibida solicitud OPTIONS para /api/test-cors');
     res.header('Access-Control-Allow-Origin', 'https://metasapp2025-production.up.railway.app');
     res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, origin');
     res.header('Access-Control-Allow-Credentials', 'true');
     res.status(200).send('Preflight OK'); // Importante: Enviar un status 200 para OPTIONS
 });
@@ -237,5 +239,5 @@ console.log("app.js - Antes de app.listen()"); // NUEVO LOG
 //});
 
 // 🔄 Exportaciones combinadas
-app.corsOptions = corsOptions;  // 👈 Adjunta corsOptions al objeto app
+//module.exports.corsOptions = corsOptions;   // 👈 Adjunta corsOptions al objeto app
 module.exports = app;           // 👈 Exporta app con la nueva propiedad

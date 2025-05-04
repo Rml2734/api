@@ -12,8 +12,8 @@ const { pedirCuenta, crear, borrar } = require("../db/pedidos");
 const { body, validationResult } = require("express-validator");
 
 // 🆕 Importar configuración CORS del app.js
-const app = require("../app");  // Importa la app principal
-const corsOptions = app.corsOptions;  // Accede a la configuración
+// 🟢 IMPORTACIÓN CORRECTA 🟢
+const { corsOptions } = require("../config/cors"); // 👈 Nueva importación desde config/
 
 // 🆕 1. Manejar solicitudes OPTIONS para login
 router.options("/login", cors(corsOptions), (req, res) => {

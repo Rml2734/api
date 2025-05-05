@@ -70,28 +70,42 @@
 require('dotenv').config();
 const { Pool } = require('pg');
 
-// Configuración para Railway (producción)
-const pool = new Pool({
+let cn;
+
+if (process.env.NODE_ENV === 'production') {
+  cn = {
     connectionString: process.env.DATABASE_URL,
     ssl: {
-        rejectUnauthorized: false // 👈 Obligatorio para Railway
-    },
-    max: 15 // Conexiones máximas
-});
+      rejectUnauthorized: false
+    }
+  };
+  console.log("Configurando conexión a la base de datos en PRODUCCIÓN con DATABASE_URL:", process.env.DATABASE_URL);
+} else {
+  cn = {
+    user: process.env.DB_USER || 'tu_usuario_por_defecto',
+    password: process.env.DB_PASSWORD || 'tu_contraseña_por_defecto',
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 5432,
+    database: process.env.DB_NAME || 'metasapp'
+  };
+  console.log("Configurando conexión a la base de datos en DESARROLLO:", cn);
+}
+
+const pool = new Pool(cn);
 
 // Verificación de conexión inmediata
 pool.query('SELECT NOW()', (err) => {
-    if (err) {
-        console.error("💥 ERROR CRÍTICO DE CONEXIÓN A POSTGRESQL:", err.message);
-        console.error("Detalles:", {
-            host: new URL(process.env.DATABASE_URL).hostname,
-            user: new URL(process.env.DATABASE_URL).username,
-            database: new URL(process.env.DATABASE_URL).pathname.split('/')[1]
-        });
-    } else {
-        console.log("✅ Conectado a PostgreSQL en:", new URL(process.env.DATABASE_URL).host);
-        console.log("   Base de datos:", new URL(process.env.DATABASE_URL).pathname.split('/')[1]);
-    }
+  if (err) {
+    console.error("💥 ERROR CRÍTICO DE CONEXIÓN A POSTGRESQL:", err.message);
+    console.error("Detalles:", {
+      host: new URL(cn.connectionString || `postgresql://${cn.host}:${cn.port}/${cn.database}`).hostname,
+      user: new URL(cn.connectionString || `postgresql://${cn.host}:${cn.port}/${cn.database}`).username,
+      database: new URL(cn.connectionString || `postgresql://${cn.host}:${cn.port}/${cn.database}`).pathname.split('/')[1]
+    });
+  } else {
+    console.log("✅ Conectado a PostgreSQL en:", new URL(cn.connectionString || `postgresql://${cn.host}:${cn.port}/${cn.database}`).host);
+    console.log("  Base de datos:", new URL(cn.connectionString || `postgresql://${cn.host}:${cn.port}/${cn.database}`).pathname.split('/')[1]);
+  }
 });
 
 module.exports = pool;

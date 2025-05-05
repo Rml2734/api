@@ -89,7 +89,7 @@ module.exports = {
 
 // db/pedidos.js - Versión Final Funcional
 const { pool } = require('./configuracion');
-
+console.log("Valor de pool al inicio de pedidos.js:", pool); // 👈 Agregar este log
 // ==============================================
 // Funciones Principales de Acceso a la Base de Datos
 // ==============================================
@@ -97,6 +97,7 @@ const { pool } = require('./configuracion');
 function pedirTodas(tabla, cuenta_id, callback) {
     const query = `SELECT * FROM ${tabla} WHERE cuenta_id = $1`;
     console.log("📋 Ejecutando consulta:", query);
+    console.log("Valor de pool dentro de pedirTodas:", pool); // 👈 Agregar este log
     
     pool.query(query, [cuenta_id], (err, res) => {
         if (err) {

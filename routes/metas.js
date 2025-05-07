@@ -85,15 +85,22 @@ router.get('/:id', function (req, res, next) {
 router.post("/", 
   body("detalles").isLength({ min: 5 }),
   body("periodo").not().isEmpty(),
+  body("plazo").isISO8601().withMessage('Fecha inválida. Usar formato YYYY-MM-DD'), // 👈 Validación añadida
   function (req, res, next) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     if (!req.auth || !req.auth.id) {
       return res.status(401).json({ error: "No autorizado" });
     }
 
-    const cuenta_id = req.auth.id; // 🔥 Asegurar que el usuario autenticado es el dueño de la meta
+    const cuenta_id = req.auth.id;
     const nuevaMeta = { 
       ...req.body,
-      cuenta_id
+      cuenta_id,
+      plazo: new Date(req.body.plazo).toISOString() // 👈 Asegurar formato correcto
     };
 
     crear("metas", nuevaMeta, (err, meta) => {
@@ -104,11 +111,11 @@ router.post("/",
 );
 
 
-
   /* PUT Actualizar meta */
   router.put('/:id', 
     body('detalles').isLength({ min: 5 }),
     body('periodo').not().isEmpty(),
+    body('plazo').isISO8601().withMessage('Fecha inválida. Usar formato YYYY-MM-DD'), // 👈 Validación añadida
     function (req, res, next) {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -118,49 +125,36 @@ router.post("/",
       }
   
       const id = req.params.id;
-      const cuenta_id = req.auth.id; // 🔥 Se obtiene del JWT
-      const body = { ...req.body, cuenta_id }; // 🔥 Se asegura que el cuenta_id sea el correcto
+      const cuenta_id = req.auth.id;
+      const body = { 
+        ...req.body,
+        cuenta_id,
+        plazo: new Date(req.body.plazo).toISOString() // 👈 Formatear fecha
+      };
   
+      // 🔥 Corregir verificación de existencia
       pedir('metas', id, (err, meta) => {
         if (err) return next(err);
-        if (!meta.length) return res.sendStatus(404);
-        if (meta[0].cuenta_id !== cuenta_id) { // 🔥 Verifica si la meta pertenece al usuario
-          return res.status(403).json({ error: "No autorizado para modificar esta meta" });
-        }
-  
+        if (!meta || meta.length === 0) return res.status(404).send({ error: "Meta no encontrada" });
+        
         actualizar('metas', id, body, (err, actualizada) => {
           if (err) return next(err);
+          if (!actualizada) return res.status(404).send({ error: "Error al actualizar" });
           res.send(actualizada);
         });
       });
     }
   );
-  
-  
 
 /* DELETE Borrar meta */
 router.delete('/:id', function (req, res, next) {
-   //const id = req.params.id;
-   //const indice = metas.findIndex(item => item.id === id);
-   //if (indice === -1) {
-     //return res.sendStatus(404);
-   //}
-   //metas.splice(indice, 1);
-   //res.sendStatus(204);
   const id = req.params.id;
-  pedir('metas', id, (err, meta) => {
-    if (err) {
-      return next(err);
-    }
-    if (!meta.length) {
-      return res.sendStatus(404);
-    }
-    borrar('metas', id, (err) => {
-      if (err) {
-        return next(err);
-      }
-      res.sendStatus(204);
-    });
+  
+  // 🔥 Mejorado el manejo de errores
+  borrar('metas', id, (err, resultado) => {
+    if (err) return next(err);
+    if (!resultado) return res.status(404).send({ error: "Meta no encontrada" });
+    res.sendStatus(204);
   });
 });
 

@@ -10,7 +10,7 @@ var router = express.Router();
 // Asegúrate que las funciones importadas hagan lo que esperas
 const { pedirCuenta, crear, borrar } = require("../db/pedidos");
 const { body, validationResult } = require("express-validator");
-
+const pool = require('../db/configuracion'); // ✅ Importar pool
 // 🆕 Importar configuración CORS del app.js
 // 🟢 IMPORTACIÓN CORRECTA 🟢
 const { corsOptions } = require("../config/cors"); // 👈 Nueva importación desde config/
@@ -168,12 +168,12 @@ router.delete('/usuarios/:id', autenticar, async (req, res, next) => {
         const db = require('../db/configuracion');
 
         // Eliminar metas usando el nombre de columna correcto 'cuenta_id'
-        await db.none('DELETE FROM metas WHERE cuenta_id = $1', [usuarioId]);
+        await pool.query('DELETE FROM metas WHERE cuenta_id = $1', [usuarioId]);
 
         console.log(`  Borrando cuenta con id: ${usuarioId}...`);
 
         // Eliminar la cuenta
-        await db.none('DELETE FROM cuentas WHERE id = $1', [usuarioId]);
+        await pool.query('DELETE FROM cuentas WHERE id = $1', [usuarioId]);
 
         console.log(`✅ Usuario y metas eliminados para ID: ${usuarioId}`);
         res.status(204).end();

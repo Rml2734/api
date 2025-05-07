@@ -87,8 +87,10 @@ module.exports = {
   borrar
 };  */
 
+
 // db/pedidos.js - Versión Final Funcional
-const { pool } = require('./configuracion');
+
+const pool  = require('./configuracion');
 console.log("Valor de pool al inicio de pedidos.js:", pool); // 👈 Agregar este log
 // ==============================================
 // Funciones Principales de Acceso a la Base de Datos
@@ -187,17 +189,21 @@ function actualizar(tabla, id, item, callback) {
 }
 
 function borrar(tabla, id, callback) {
-    const query = `DELETE FROM ${tabla} WHERE id = $1`;
-    console.log("🗑️ Eliminando registro de", tabla, "ID:", id);
-    
-    pool.query(query, [id], (err) => {
-        if (err) {
-            console.error(`💥 Error al borrar de ${tabla}:`, err);
-            return callback(err);
-        }
-        console.log("🆗 Registro eliminado exitosamente");
-        callback(null);
-    });
+  const query = `DELETE FROM ${tabla} WHERE id = $1 RETURNING *`; // ← Añadir RETURNING
+  console.log("🗑️ Eliminando registro de", tabla, "ID:", id);
+  
+  pool.query(query, [id], (err, res) => { // ← Manejar el resultado
+    if (err) {
+      console.error(`💥 Error al borrar de ${tabla}:`, err);
+      return callback(err);
+    }
+    if (res.rowCount === 0) {
+      console.log("⚠️ Registro no encontrado para borrar");
+      return callback(null, null);
+    }
+    console.log("🆗 Registro eliminado exitosamente");
+    callback(null, res.rows[0]);
+  });
 }
 
 // ==============================================

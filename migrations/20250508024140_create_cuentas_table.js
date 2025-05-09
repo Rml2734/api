@@ -7,7 +7,7 @@ exports.up = function(knex) {
       .createTable('cuentas', (table) => {
         table.increments('id').primary();
         table.string('usuario').notNullable().unique();
-        table.string('clave').notNullable();
+        table.string('hash').notNullable();
         table.string('correo').notNullable().unique();
       })
       .createTable('metas', (table) => {

@@ -134,6 +134,7 @@ const shouldSkipJwt = (req) => {
 };
 */
 // Función para determinar si saltar la verificación JWT
+/*
 const shouldSkipJwt = (req) => {
     const skip = (req.method === 'HEAD' && req.path === '/') ||
         (req.method === 'GET' && req.path === '/') ||
@@ -145,6 +146,23 @@ const shouldSkipJwt = (req) => {
     // Log si se salta
     // if (skip) console.log(`⏭️ Omitiendo JWT para: ${req.method} ${req.path}`);
     return skip;
+};
+*/
+const shouldSkipJwt = (req) => {
+    // Definimos si el método es POST o OPTIONS para las rutas de autenticación
+    const isAuthMethod = req.method === 'POST' || req.method === 'OPTIONS';
+
+    const skip = (req.method === 'HEAD' && req.path === '/') ||
+        (req.method === 'GET' && req.path === '/') ||
+        /\.(css|js|png|jpg|ico|svg)$/.test(req.path) || // Archivos estáticos
+        (req.path.startsWith('/api/signup') && isAuthMethod) ||
+        (req.path.startsWith('/api/login') && isAuthMethod) ||
+        (req.path.startsWith('/api/recuperar-clave') && isAuthMethod) || // 🔑 AJUSTE CLAVE: Permite POST y OPTIONS
+        (req.path.startsWith('/api/restablecer-clave') && isAuthMethod); // 🔑 AJUSTE CLAVE: Permite POST y OPTIONS
+
+    // Log si se salta
+    // if (skip) console.log(`⏭️ Omitiendo JWT para: ${req.method} ${req.path}`);
+    return skip;
 };
 
 // Middleware condicional para aplicar JWT

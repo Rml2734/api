@@ -157,7 +157,10 @@ router.post("/recuperar-clave", async (req, res) => {
             // ✅ SOLUCIÓN SEGURA: Desactiva solo en DEV, pero mantiene TRUE en producción.
             tls: {
                 // Desactiva la verificación de certificado SOLAMENTE si no estamos en producción.
-                rejectUnauthorized: process.env.NODE_ENV !== 'production' ? false : true 
+                //lo usaremos para desarrollo local
+                //rejectUnauthorized: process.env.NODE_ENV !== 'production' ? false : true 
+
+                rejectUnauthorized: false 
             }
         });
 

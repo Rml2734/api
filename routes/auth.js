@@ -146,6 +146,7 @@ router.post("/recuperar-clave", async (req, res) => {
 
         // 3. Configuración de Nodemailer (¡CORREGIDO!)
         // Ahora usa EMAIL_HOST, EMAIL_USER y EMAIL_PASSWORD
+        /*
         const transporter = nodemailer.createTransport({
             host: process.env.EMAIL_HOST, // Usamos la variable EMAIL_HOST de .env
             port: 465, // Puerto estándar y seguro para Gmail
@@ -158,11 +159,31 @@ router.post("/recuperar-clave", async (req, res) => {
             tls: {
                 // Desactiva la verificación de certificado SOLAMENTE si no estamos en producción.
                 //lo usaremos para desarrollo local
-                //rejectUnauthorized: process.env.NODE_ENV !== 'production' ? false : true 
+                rejectUnauthorized: process.env.NODE_ENV !== 'production' ? false : true 
 
-                rejectUnauthorized: false 
+                
             }
         });
+           */
+        // 3. Configuración de Nodemailer (¡CORREGIDO PARA SENDGRID!)
+        const transporter = nodemailer.createTransport({
+            host: process.env.EMAIL_HOST, // 'smtp.sendgrid.net'
+            
+            // 🎯 CAMBIO CRÍTICO: PUERTO 587 PARA SENDGRID
+            port: 587, 
+            
+            // 🎯 CAMBIO CRÍTICO: 'secure: false' para puerto 587 (usa STARTTLS)
+            secure: false, 
+            
+            auth: {
+                user: process.env.EMAIL_USER, // 'apikey'
+                pass: process.env.EMAIL_PASSWORD // Clave SG.xxxx
+            },
+            
+            // Se elimina la configuración 'tls' porque ya no es necesaria con SendGrid
+        });
+
+
 
         // 4. Enviar el correo
 await transporter.sendMail({

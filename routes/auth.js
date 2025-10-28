@@ -210,34 +210,30 @@ router.post("/refresh-token", (req, res) => {
 module.exports = router;
 */
 
-// Importaciones requeridas
-const sgMail = require('@sendgrid/mail'); // Cliente de la API de SendGrid
+const sgMail = require('@sendgrid/mail'); // API de SendGrid
 const express = require("express");
 const router = express.Router();
-const db = require("../db/configuracion"); // Asume que 'db' es tu objeto de conexión a Postgres
+const db = require("../db/configuracion"); // Conexión a Postgres (usamos 'db')
 const jwt = require('jsonwebtoken'); 
 const bcrypt = require("bcrypt"); 
 
 // --- CONFIGURACIÓN DE SENDGRID API ---
-// Usa process.env.EMAIL_PASSWORD, que debe contener tu API Key de SendGrid (SG.xxxx)
+// Usa process.env.EMAIL_PASSWORD, que DEBE contener tu API Key de SendGrid (SG.xxxx)
 sgMail.setApiKey(process.env.EMAIL_PASSWORD);
 
 const saltRounds = 12; // Número de rondas de hash para bcrypt
 
 // =========================================================================
-// RUTA: RESTABLECER CLAVE (Usando Código de la base de datos)
+// RUTA: RESTABLECER CLAVE (Verifica código en DB)
 // =========================================================================
 router.post("/restablecer-clave", async (req, res) => {
-    // 1. Recibir datos: email, código y nueva contraseña
     const { email, codigo, nuevaClave } = req.body;
 
-    // Validación básica
     if (!email || !codigo || !nuevaClave) {
         return res.status(400).json({ error: "Faltan datos requeridos (email, código, nueva clave)." });
     }
     
     try {
-        // 2. Buscar usuario y verificar código y expiración
         const resultado = await db.query(
             "SELECT * FROM cuentas WHERE usuario = $1 AND codigo_recuperacion = $2", 
             [email, codigo]
@@ -249,17 +245,13 @@ router.post("/restablecer-clave", async (req, res) => {
             return res.status(400).json({ error: "Código de recuperación o correo incorrecto." });
         }
 
-        // 3. Verificar si el código ha expirado
         if (new Date() > new Date(cuenta.recuperacion_expira)) {
-            // Limpiamos el código expirado
             await db.query("UPDATE cuentas SET codigo_recuperacion = NULL, recuperacion_expira = NULL WHERE usuario = $1", [email]);
             return res.status(400).json({ error: "El código de recuperación ha expirado." });
         }
 
-        // 4. Hashear la nueva contraseña
         const nuevoHash = await bcrypt.hash(nuevaClave, saltRounds);
 
-        // 5. Actualizar la base de datos con la nueva contraseña y limpiar los campos de recuperación
         await db.query(
             "UPDATE cuentas SET hash = $1, codigo_recuperacion = NULL, recuperacion_expira = NULL WHERE usuario = $2", 
             [nuevoHash, email]
@@ -283,12 +275,10 @@ router.post('/recuperar-clave', async (req, res) => {
         console.log(`Ejecutando consulta: SELECT * FROM cuentas WHERE usuario = $1 [ '${usuario}' ]`);
         
         // 1. Buscar el usuario en la base de datos
-        // Usamos 'db' en lugar de 'pool' para consistencia con tu importación
         const result = await db.query('SELECT * FROM cuentas WHERE usuario = $1', [usuario]);
 
         if (result.rows.length === 0) {
             console.log(`❌ Usuario no encontrado: ${usuario}`);
-            // Siempre devuelve 200/éxito para no dar pistas sobre la existencia de la cuenta
             return res.status(200).json({ 
                 msg: 'Si la dirección de correo electrónico está registrada, se enviará un enlace de restablecimiento.',
                 success: true
@@ -328,7 +318,7 @@ router.post('/recuperar-clave', async (req, res) => {
             `,
         };
 
-        // 5. Enviar el correo usando la API de SendGrid (HTTPS)
+        // 5. Enviar el correo usando la API de SendGrid (HTTPS, evita el firewall)
         await sgMail.send(msg);
 
         console.log(`✅ Correo de recuperación enviado al usuario: ${cuenta.usuario}`);
@@ -338,11 +328,9 @@ router.post('/recuperar-clave', async (req, res) => {
         });
 
     } catch (error) {
-        // Aquí capturaremos errores 401/403 de SendGrid o errores de red.
-        // Si ves un error aquí, **probablemente es un problema con la API Key (EMAIL_PASSWORD)**.
+        // Si ves un error aquí, es un error de la API Key o del remitente.
         console.error('🔥 Error en /recuperar-clave (SendGrid API):', error);
         
-        // Manejo de errores específicos de SendGrid (si aplica)
         let errorMessage = 'Error al enviar el correo. Por favor, revisa tu API Key de SendGrid.';
         
         if (error.response && error.response.body) {

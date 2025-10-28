@@ -2,7 +2,8 @@
 // config/cors.js
 const allowedOrigins = [
     "https://metasapp2025-production.up.railway.app",
-    "http://localhost:5173"
+    "http://localhost:5173",
+    "http://localhost:4000"
 ];
 
 const corsOptions = {

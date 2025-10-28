@@ -170,7 +170,7 @@ router.post("/recuperar-clave", async (req, res) => {
             host: process.env.EMAIL_HOST, // 'smtp.sendgrid.net'
             
             // 🎯 CAMBIO CRÍTICO: PUERTO 587 PARA SENDGRID
-            port: 587, 
+            port: 2525, 
             
             // 🎯 CAMBIO CRÍTICO: 'secure: false' para puerto 587 (usa STARTTLS)
             secure: false, 
